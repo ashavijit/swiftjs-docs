@@ -1,6 +1,11 @@
+---
+title: API Reference
+description: Complete API reference for SwiftJS framework
+---
+
 # API Reference
 
-## `createApp(config)`
+## createApp(config)
 
 Creates a new SwiftJS application instance.
 
@@ -8,71 +13,82 @@ Creates a new SwiftJS application instance.
 import { createApp } from 'swiftjs-core';
 
 const app = createApp({
-  port: 3000,           // Port to listen on (default: 3000)
+  port: 3000,              // Port to listen on (default: 3000)
   routesDir: 'src/routes', // Directory for file-based routing
-  env: 'development',   // 'development' | 'production' | 'test'
-  trustProxy: true,     // Trust proxy headers (X-Forwarded-For)
-  bodyLimit: '1mb',     // Request body size limit
-  cookieSecret: 'secret' // Secret for signing cookies
+  env: 'development',      // 'development' | 'production' | 'test'
+  trustProxy: true,        // Trust proxy headers (X-Forwarded-For)
+  bodyLimit: '1mb',        // Request body size limit
+  cookieSecret: 'secret'   // Secret for signing cookies
 });
 ```
 
-## `Application` Instance
+## Application Instance
 
-### `app.get(path, handler, [config])`
+### app.get(path, handler, config?)
 Register a GET route.
-- `path` (string): URL path pattern.
-- `handler` (function): Async handler function.
-- `config` (object, optional): Route configuration (validation, middleware).
+- **path** (string): URL path pattern.
+- **handler** (function): Async handler function.
+- **config** (object, optional): Route configuration (validation, middleware).
 
 Also available: `app.post`, `app.put`, `app.patch`, `app.delete`, `app.all`.
 
-### `app.use(middleware)`
+### app.use(middleware)
 Register global middleware.
 
-### `app.register(plugin)`
+### app.register(plugin)
 Register a plugin.
 
-### `app.listen()`
+### app.listen()
 Start the HTTP server. Returns a Promise.
 
-### `app.router`
+### app.router
 Access the underlying Radix Router instance.
 
-## `Context` Object
+## Context Object
 
 The `ctx` object is passed to every handler and middleware.
 
 ### Request Properties
-- `ctx.req`: Node.js IncomingMessage.
-- `ctx.method`: HTTP method (string).
-- `ctx.url`: Request URL (string).
-- `ctx.path`: Request path (string).
-- `ctx.query`: Parsed query parameters (Record<string, string | string[]>).
-- `ctx.params`: Route parameters (Record<string, string>).
-- `ctx.body`: Parsed request body (any).
-- `ctx.headers`: Request headers (object).
-- `ctx.ip`: Client IP address.
-- `ctx.cookies.get(name)`: Get a cookie value.
-- `ctx.cookies.getSigned(name)`: Get a signed cookie value.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `ctx.req` | IncomingMessage | Node.js IncomingMessage |
+| `ctx.method` | string | HTTP method |
+| `ctx.url` | string | Request URL |
+| `ctx.path` | string | Request path |
+| `ctx.query` | object | Parsed query parameters |
+| `ctx.params` | object | Route parameters |
+| `ctx.body` | any | Parsed request body |
+| `ctx.headers` | object | Request headers |
+| `ctx.ip` | string | Client IP address |
+
+### Cookie Methods
+
+- `ctx.cookies.get(name)` - Get a cookie value
+- `ctx.cookies.getSigned(name)` - Get a signed cookie value
+- `ctx.cookies.set(name, value, options?)` - Set cookie
+- `ctx.cookies.delete(name)` - Delete cookie
 
 ### Response Methods
-- `ctx.json(data)`: Send JSON response (status 200 by default).
-- `ctx.text(string)`: Send plain text response.
-- `ctx.html(string)`: Send HTML response.
-- `ctx.status(code)`: Set HTTP status code (chainable).
-- `ctx.redirect(url, [status])`: Redirect to URL.
-- `ctx.notFound([message])`: Send 404 response.
+
+| Method | Description |
+|--------|-------------|
+| `ctx.json(data)` | Send JSON response (status 200 by default) |
+| `ctx.text(string)` | Send plain text response |
+| `ctx.html(string)` | Send HTML response |
+| `ctx.status(code)` | Set HTTP status code (chainable) |
+| `ctx.redirect(url, status?)` | Redirect to URL |
+| `ctx.notFound(message?)` | Send 404 response |
 
 ### Response Headers
-- `ctx.res.setHeader(name, value)`: Set response header.
-- `ctx.cookies.set(name, value, [options])`: Set cookie.
-- `ctx.cookies.delete(name)`: Delete cookie.
 
-### State & Utils
-- `ctx.state.get(key)`: Get value from request-scoped state.
-- `ctx.state.set(key, value)`: Set value in request-scoped state.
-- `ctx.logger`: Application logger instance.
+- `ctx.res.setHeader(name, value)` - Set response header
+
+### State and Utils
+
+- `ctx.state.get(key)` - Get value from request-scoped state
+- `ctx.state.set(key, value)` - Set value in request-scoped state
+- `ctx.logger` - Application logger instance
 
 ## Types
 
