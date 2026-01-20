@@ -23,6 +23,9 @@ interface CommandMenuProps {
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { DialogTitle } from "@radix-ui/react-dialog";
+
 export function CommandMenu({ open, setOpen }: CommandMenuProps) {
     const router = useRouter();
     const { setTheme } = useTheme();
@@ -51,6 +54,9 @@ export function CommandMenu({ open, setOpen }: CommandMenuProps) {
             label="Global Command Menu"
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[500px] bg-white dark:bg-[#0a0a0a] rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-2xl p-0 z-[100]"
         >
+            <VisuallyHidden>
+                <DialogTitle>Global Command Menu</DialogTitle>
+            </VisuallyHidden>
             <div className="flex items-center border-b border-neutral-200 dark:border-neutral-800 px-3">
                 <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                 <Command.Input
