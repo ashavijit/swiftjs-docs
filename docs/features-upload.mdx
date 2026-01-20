@@ -1,0 +1,59 @@
+# File Uploads
+
+SwiftJS has built-in support for handling `multipart/form-data` requests.
+
+## Setup
+
+Use the `uploadPlugin` to enable file support globally or per-route.
+
+```typescript
+import { createApp } from 'swiftjs-core';
+import { uploadPlugin } from 'swiftjs-core';
+
+const app = createApp();
+
+app.register(uploadPlugin({
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+    files: 5
+  }
+}));
+```
+
+## Handling Files
+
+Files are available in `ctx.req.files`.
+
+```typescript
+// src/routes/upload.post.ts
+export default async function handler(ctx) {
+  const file = ctx.req.files?.[0]; // Access first file
+
+  if (!file) {
+    return ctx.status(400).json({ error: 'No file uploaded' });
+  }
+
+  return {
+    filename: file.filename,
+    mimetype: file.mimetype,
+    size: file.size
+  };
+}
+```
+
+## Direct Buffer Access
+
+By default, files are buffered in memory.
+
+```typescript
+import fs from 'fs';
+
+app.post('/save', async (ctx) => {
+  const file = ctx.req.files[0];
+  await fs.promises.writeFile(`./uploads/${file.filename}`, file.buffer);
+});
+```
+
+## Streaming (Advanced)
+
+For large files, you can stream directly to storage (S3/Disk) to avoid memory limits. This requires using `busboy` directly via `ctx.req.pipe()`.

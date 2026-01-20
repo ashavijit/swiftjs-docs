@@ -1,0 +1,71 @@
+# Runtime Adapters
+
+SwiftJS is designed to range-agnostic. While it defaults to Node.js, it includes built-in adapters for other runtimes.
+
+## Auto-Detection
+
+By default, SwiftJS detects your runtime environment and selects the best adapter.
+
+```typescript
+// Detects Node, Bun, or Edge automatically
+const app = createApp();
+```
+
+You can force a specific runtime in the configuration:
+
+```typescript
+const app = createApp({
+  runtime: 'node' // 'node' | 'bun' | 'edge' | 'lambda'
+});
+```
+
+## Supported Runtimes
+
+### Node.js (Default)
+The standard adapter for typical server deployments.
+- Uses native `http` module
+- Full Stream support
+- Supports `cluster` module
+
+### Bun
+Optimized for the Bun runtime.
+- Uses `Bun.serve()`
+- Fast native `Response` objects
+- Zero-copy body parsing
+
+To run with Bun:
+```bash
+bun run src/index.ts
+```
+
+### AWS Lambda
+Deploy as a serverless function.
+
+```typescript
+// src/lambda.ts
+import { createApp } from 'swiftjs-core';
+import { createLambdaHandler } from 'swiftjs-core';
+
+const app = createApp();
+
+app.get('/', () => 'Hello from Lambda');
+
+// Export the handler for AWS
+export const handler = createLambdaHandler(app);
+```
+
+### Edge Runtimes (Vercel/Cloudflare)
+For lightweight edge deployments.
+
+```typescript
+// src/edge.ts
+import { createApp } from 'swiftjs-core';
+import { createEdgeAdapter } from 'swiftjs-core';
+
+const app = createApp();
+const adapter = createEdgeAdapter(app);
+
+export default {
+  fetch: adapter.fetch
+};
+```

@@ -1,0 +1,55 @@
+# Caching
+
+SwiftJS provides a unified caching interface supporting both in-memory and Redis drivers.
+
+## Configuration
+
+Configure the cache driver when creating your app:
+
+```typescript
+const app = createApp({
+  cache: {
+    driver: 'memory', // 'memory' or 'redis'
+    ttl: 60, // Default TTL in seconds
+    max: 1000 // Max items (memory only)
+  }
+});
+```
+
+For Redis:
+```typescript
+const app = createApp({
+  cache: {
+    driver: 'redis',
+    redis: {
+      url: 'redis://localhost:6379'
+    }
+  }
+});
+```
+
+## Usage
+
+Access the cache via `app.cache`.
+
+```typescript
+// Set a value
+await app.cache.set('user:1', { name: 'Alice' }, 300); // 300s TTL
+
+// Get a value
+const user = await app.cache.get('user:1');
+
+// Delete a value
+await app.cache.delete('user:1');
+
+// Clear all
+await app.cache.clear();
+```
+
+## Atomic Operations (Redis Only)
+The Redis driver supports atomic operations if you access the underlying client.
+
+```typescript
+const redis = (app.cache as RedisCache).client;
+await redis.incr('counter');
+```

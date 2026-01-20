@@ -1,0 +1,116 @@
+# Tutorial: Real-time with WebSockets & SSE
+
+SwiftJS has **native support** for WebSockets and Server-Sent Events (SSE). You don't need external libraries like `ws` or `socket.io`.
+
+## WebSockets
+
+Use `app.ws(path, handler)` to create WebSocket endpoints.
+
+### Echo Server Example
+
+In your `src/index.ts`:
+
+```typescript
+import { createApp } from 'swiftjs-core';
+
+const app = createApp();
+
+app.ws('/chat', {
+  // Connection hook
+  onOpen(ctx) {
+    const { clientId } = ctx.client;
+    ctx.logger.info(`Client connected: ${clientId}`);
+
+    // Send immediate response
+    ctx.client.sendJson({ type: 'welcome', message: 'Connected!' });
+  },
+
+  // Message handler
+  onMessage(ctx, msg) {
+    // msg.data is string or Buffer
+    // msg.type is 'text' or 'binary'
+    const text = msg.data.toString();
+    console.log('Received:', text);
+
+    // Broadcast to all connected clients
+    // (In a real app, you might maintain a list of clients in memory or Redis)
+    ctx.client.send(`Echo: ${text}`);
+  },
+
+  // Cleanup
+  onClose(ctx, code, reason) {
+    console.log(`Client disconnected: ${code} ${reason}`);
+  }
+});
+
+app.listen().then(() => {
+  console.log('Server running on http://localhost:3000');
+});
+```
+
+### Client Code
+
+```javascript
+const ws = new WebSocket('ws://localhost:3000/chat');
+
+ws.onmessage = (event) => {
+  console.log('Received:', event.data);
+};
+
+ws.send('Hello SwiftJS!');
+```
+
+## Server-Sent Events (SSE)
+
+For one-way streaming (server -> client), SSE is simpler than WebSockets. Use `app.sse(path, handler)`.
+
+### Streaming Data Example
+
+```typescript
+app.sse('/events', async (ctx) => {
+  // Send initial event
+  ctx.client.send({ event: 'connected', data: { id: ctx.client.id } });
+
+  // Stream data every second
+  const interval = setInterval(() => {
+    // Check if client is still connected
+    if (!ctx.client.isConnected) {
+      clearInterval(interval);
+      return;
+    }
+
+    ctx.client.sendData({
+      timestamp: new Date(),
+      value: Math.random()
+    });
+  }, 1000);
+
+  // Cleanup on close is handled automatically,
+  // but you should stop your own timers/subscriptions
+});
+```
+
+### Client Code
+
+```javascript
+const evtSource = new EventSource('/events');
+
+evtSource.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('New data:', data);
+};
+
+evtSource.addEventListener('connected', (e) => {
+  console.log('Connected! ID:', JSON.parse(e.data).id);
+});
+```
+
+## Comparisons
+
+| Feature | WebSockets | SSE |
+|---------|------------|-----|
+| **Direction** | Bidirectional | Server-to-Client |
+| **Protocol** | WS / WSS | HTTP / HTTPS |
+| **Complexity** | Higher | Lower |
+| **Retries** | Manual | Automatic |
+| **Use Case** | Chat, Games, Collab | Notifications, Feeds, Logs |

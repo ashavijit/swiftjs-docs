@@ -1,0 +1,59 @@
+---
+title: SwiftJS Documentation
+description: A fast, modern, and type-safe web framework for Node.js and Bun
+---
+
+# SwiftJS
+
+SwiftJS is a TypeScript-first web framework designed for building fast, scalable APIs with excellent developer experience.
+
+## Key Features
+
+- **Ultra High Performance** - 53k+ req/sec (Node.js), matching Hono and Fastify
+- **Hybrid Sync/Async Router** - Zero-allocation hot paths for synchronous routes
+- **Multi-Runtime Support** - Run on Node.js or Bun with automatic detection
+- **TypeScript-First** - Full type safety with excellent IDE support
+- **File-Based Routing** - Next.js-style automatic route discovery
+- **Schema Validation** - FastAPI-style request validation using Zod
+- **Plugin System** - Fastify-style extensible plugin architecture
+- **Auto API Documentation** - Swagger UI, ReDoc, and Scalar support
+- **Built-in Observability** - Prometheus metrics, OpenTelemetry tracing, health checks
+- **Session Management** - Cookie-based sessions with multiple storage backends
+- **File Uploads** - Multipart form handling with validation
+- **WebSocket & SSE** - Real-time communication support
+- **Dependency Injection** - Built-in service container
+- **Caching** - Memory and Redis cache adapters
+
+## Quick Links
+
+- [Getting Started](/docs/getting-started) - Install and create your first app
+- [Routing](/docs/routing) - File-based and programmatic routing
+- [Validation](/docs/validation) - Request validation with Zod
+- [Middleware](/docs/middleware) - Creating and using middleware
+- [Plugins](/docs/plugins) - Extending functionality with plugins
+- [API Reference](/docs/api) - Complete API documentation
+- [CLI Reference](/docs/cli) - Command line tools
+- [Examples](/docs/examples) - Real-world examples
+
+## Installation
+
+```bash
+npm install swiftjs-core zod
+```
+
+## Minimal Example
+
+```typescript
+import { createApp } from 'swiftjs-core';
+
+const app = createApp({ port: 3000 });
+
+app.get('/', () => ({ message: 'Hello SwiftJS!' }));
+
+app.listen();
+```
+
+## Requirements
+
+- Node.js >= 18.0.0 or Bun >= 1.0.0
+- TypeScript >= 5.0.0

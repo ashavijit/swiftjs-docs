@@ -1,0 +1,89 @@
+# Plugins
+
+Plugins allow you to extend SwiftJS functionality, register global middleware, modify the context, and hook into application lifecycle events.
+
+## Official Plugins
+
+SwiftJS maintains a collection of official plugins for common requirements.
+
+| Plugin | Package | Description |
+|--------|---------|-------------|
+| **CORS** | `@swiftjs/cors` | Cross-Origin Resource Sharing |
+| **Helmet** | `@swiftjs/helmet` | Secure HTTP headers |
+| **JWT** | `@swiftjs/jwt` | JSON Web Token authentication |
+| **Rate Limit** | `@swiftjs/ratelimit` | Request rate limiting |
+| **S3** | `@swiftjs/s3` | AWS S3 object storage client |
+
+## Using Plugins
+
+Register plugins using `app.register()`.
+
+```typescript
+import { createApp } from 'swiftjs-core';
+import cors from '@swiftjs/cors';
+import { s3Plugin } from '@swiftjs/s3';
+
+const app = createApp();
+
+// Simple middleware plugin
+app.register(cors());
+
+// Feature plugin with options
+app.register(s3Plugin({
+  region: 'us-east-1',
+  credentials: {
+    accessKeyId: process.env.AWS_KEY,
+    secretAccessKey: process.env.AWS_SECRET
+  }
+}));
+```
+
+## Creating Plugins
+
+A plugin is an object with a `name` and a `register` function.
+
+```typescript
+import type { Plugin, PluginContext } from 'swiftjs-core';
+
+const myPlugin: Plugin = {
+  name: 'my-plugin',
+  register(ctx: PluginContext) {
+    // 1. Register global middleware
+    ctx.use(async (c, next) => {
+      console.log('Plugin middleware');
+      await next();
+    });
+
+    // 2. Add properties to app context (via prototype or state)
+    // Note: TypeScript declaration merging required for strict typing
+
+    // 3. Register lifecycle hooks
+    ctx.onStart(async () => {
+      console.log('App starting...');
+      // Connect to DB, etc.
+    });
+
+    ctx.onClose(async () => {
+      console.log('App closing...');
+      // Cleanup connections
+    });
+  }
+};
+
+app.register(myPlugin);
+```
+
+## Plugin Context
+
+The `PluginContext` exposes methods to interact with the application:
+
+- `use(middleware)`: Register global middleware.
+- `onStart(fn)`: Register a callback for when `app.listen()` is called.
+- `onClose(fn)`: Register a cleanup callback for server shutdown.
+- `config`: Access the application configuration.
+
+## Best Practices
+
+1. **Idempotency:** Plugins should handle being registered multiple times gracefully (or warn/throw).
+2. **Options:** Accept an options object to configure the plugin.
+3. **Typing:** Export types for your plugin options and any context augmentations.

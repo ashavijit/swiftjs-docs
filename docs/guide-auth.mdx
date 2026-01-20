@@ -1,0 +1,139 @@
+# Tutorial: Authentication
+
+This guide demonstrates how to implement secure authentication in SwiftJS using JSON Web Tokens (JWT).
+
+## 1. Install Dependencies
+
+```bash
+npm install @swiftjs/jwt jsonwebtoken types/jsonwebtoken
+```
+
+## 2. JWT Plugin Setup
+
+In your main app entry point (`src/index.ts`):
+
+```typescript
+import { createApp } from 'swiftjs-core';
+import { jwt } from '@swiftjs/jwt';
+
+const app = createApp({
+  cookieSecret: process.env.COOKIE_SECRET // Required for cookie storage
+});
+
+// Configure JWT plugin
+app.register(jwt({
+  secret: process.env.JWT_SECRET || 'super-secret',
+  cookie: 'auth_token', // Store token in cookie
+  expiresIn: '1d'
+}));
+
+// Add user type to Context
+declare module 'swiftjs-core' {
+  interface Context {
+    user?: { id: number; email: string };
+  }
+}
+```
+
+## 3. Login Route
+
+Create `src/routes/auth/login.post.ts`:
+
+```typescript
+import { Context, z, SwiftError } from 'swiftjs-core';
+import { verifyPassword } from '../../utils/password'; // Implement your hashing logic
+
+export const body = z.object({
+  email: z.string().email(),
+  password: z.string()
+});
+
+export default async function handler(ctx: Context) {
+  const { email, password } = ctx.body;
+
+  // 1. Verify credentials (mock DB)
+  const user = { id: 1, email, passwordHash: '...' };
+  const isValid = await verifyPassword(password, user.passwordHash);
+
+  if (!isValid) {
+    throw new SwiftError('Invalid credentials', 401);
+  }
+
+  // 2. Sign Token (using plugin helper if available, or manual)
+  // The @swiftjs/jwt plugin automatically adds sign/verify methods
+  const token = await ctx.jwt.sign({ id: user.id, email: user.email });
+
+  // 3. Set Cookie
+  ctx.cookies.setSigned('auth_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 86400 * 1000 // 1 day
+  });
+
+  return { success: true };
+}
+```
+
+## 4. Protected Route Middleware
+
+Create a middleware to protect routes.
+
+```typescript
+// src/middleware/auth.ts
+import { Middleware, SwiftError } from 'swiftjs-core';
+
+export const authMiddleware: Middleware = async (ctx, next) => {
+  // 1. Get token from cookie or header
+  const token = ctx.cookies.getSigned('auth_token') ||
+                ctx.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    throw new SwiftError('Unauthorized', 401);
+  }
+
+  try {
+    // 2. Verify token
+    const payload = await ctx.jwt.verify(token);
+    ctx.user = payload; // Attach to context
+    await next();
+  } catch (err) {
+    throw new SwiftError('Invalid token', 401);
+  }
+};
+```
+
+## 5. Using Protected Routes
+
+Apply the middleware to routes that need protection.
+
+```typescript
+// src/routes/profile.get.ts
+import { Context } from 'swiftjs-core';
+import { authMiddleware } from '../../middleware/auth';
+
+export const config = {
+  middleware: [authMiddleware]
+};
+
+export default function handler(ctx: Context) {
+  // Safe to access ctx.user here
+  return {
+    message: 'Profile data',
+    user: ctx.user
+  };
+}
+```
+
+## 6. Logout Route
+
+Create `src/routes/auth/logout.post.ts`:
+
+```typescript
+import { Context } from 'swiftjs-core';
+
+export default function handler(ctx: Context) {
+  ctx.cookies.delete('auth_token');
+  return { success: true };
+}
+```
