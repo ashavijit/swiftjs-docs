@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Github, Sparkles } from "lucide-react";
+import { ArrowRight, Github, Search, Command } from "lucide-react";
 import Link from "next/link";
 
 const fadeUp = {
@@ -19,7 +19,7 @@ const fadeUp = {
 
 export function Hero() {
     return (
-        <section className="relative pt-32 pb-12 sm:pt-48 sm:pb-20 px-6 overflow-hidden">
+        <section className="relative pt-12 pb-12 sm:pt-20 sm:pb-20 px-6 overflow-hidden">
             {/* Background Effects */}
             <div className="absolute inset-0 -z-10 pointer-events-none">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[800px] bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.1)_0%,transparent_70%)] dark:bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.2)_0%,transparent_70%)]" />
@@ -64,6 +64,29 @@ export function Hero() {
                     A hyper-optimized framework for building high-performance,
                     type-safe APIs without the boilerplate.
                 </motion.p>
+
+                {/* Search Bar - Specific Things Search */}
+                <motion.div
+                    custom={3} variants={fadeUp} initial="hidden" animate="visible"
+                    className="mt-12 max-w-2xl mx-auto relative group"
+                >
+                    <button
+                        onClick={() => {
+                            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+                        }}
+                        className="w-full flex items-center gap-4 px-6 h-14 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 hover:bg-white dark:hover:bg-neutral-900 transition-all shadow-sm hover:shadow-md group/search"
+                    >
+                        <Search className="w-5 h-5 text-neutral-400 group-hover/search:text-neutral-900 dark:group-hover/search:text-white transition-colors" />
+                        <span className="text-neutral-500 dark:text-neutral-400 text-lg group-hover/search:text-neutral-600 dark:group-hover/search:text-neutral-300 transition-colors">Search for specific features, docs, or guides...</span>
+                        <div className="ml-auto hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black text-[10px] font-bold text-neutral-400">
+                            <Command className="w-3 h-3" />
+                            <span>K</span>
+                        </div>
+                    </button>
+
+                    {/* Decorative glow behind search */}
+                    <div className="absolute -inset-4 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-[2rem] blur-2xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </motion.div>
 
                 {/* CTA Buttons */}
                 <motion.div

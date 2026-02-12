@@ -83,6 +83,12 @@ export function Navbar() {
                     </button>
 
                     <div className="flex items-center gap-1.5">
+                        <button
+                            onClick={() => setCommandMenuOpen(true)}
+                            className="lg:hidden p-2 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-900"
+                        >
+                            <Search className="h-5 w-5" />
+                        </button>
                         <a
                             href={docsConfig.links.github}
                             target="_blank"
