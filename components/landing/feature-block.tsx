@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LucideIcon, ArrowUpRight } from "lucide-react";
+import { LucideIcon, ArrowRight } from "lucide-react";
 
 interface FeatureBlockProps {
     title: string;
@@ -12,61 +12,57 @@ interface FeatureBlockProps {
 }
 
 export function FeatureBlock({ title, description, icon: Icon, gradient, index }: FeatureBlockProps) {
+    const isFirst = index === 0;
+    const isLarge = index === 0 || index === 3;
+
     return (
         <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.5, delay: index * 0.06, ease: [0.25, 0.4, 0.25, 1] }}
-            className="group relative rounded-2xl border border-neutral-200/80 dark:border-neutral-800/80 bg-white dark:bg-neutral-950 p-8 transition-all duration-300 hover:border-neutral-300 dark:hover:border-neutral-700 hover:shadow-lg hover:shadow-neutral-200/50 dark:hover:shadow-black/30"
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{
+                duration: 0.8,
+                delay: index * 0.1,
+                ease: [0.21, 0.45, 0.32, 0.9]
+            }}
+            className="group relative flex flex-col p-8 sm:p-10 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 transition-all duration-500 hover:bg-neutral-100 dark:hover:bg-neutral-800/80 hover:scale-[1.01]"
         >
-            {/* Hover gradient overlay */}
-            <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-[0.03] dark:group-hover:opacity-[0.06] transition-opacity duration-500 pointer-events-none`} />
+            {/* Top Indicator */}
+            <div className={`w-12 h-1 rounded-full bg-gradient-to-r ${gradient} mb-10 opacity-60 group-hover:opacity-100 transition-opacity`} />
 
-            {/* Animated background pattern — unique per card */}
-            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-                {/* Grid dots pattern */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                    <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <pattern id={`dots-${index}`} x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                                <circle cx="1" cy="1" r="0.8" className="fill-neutral-300 dark:fill-neutral-700" />
-                            </pattern>
-                        </defs>
-                        <rect width="100%" height="100%" fill={`url(#dots-${index})`} />
-                    </svg>
-                    <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white dark:from-neutral-950 dark:via-transparent dark:to-neutral-950" />
+            <div className="flex-1">
+                {/* Icon Circle */}
+                <div className="w-14 h-14 rounded-2xl bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700 flex items-center justify-center mb-8 shadow-sm group-hover:rotate-6 transition-transform">
+                    <Icon className="w-6 h-6 text-neutral-900 dark:text-white" strokeWidth={1.5} />
                 </div>
 
-                {/* Moving gradient line */}
-                <motion.div
-                    initial={{ x: "-100%", opacity: 0 }}
-                    whileInView={{ x: "200%", opacity: [0, 1, 0] }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 2, delay: 0.5 + index * 0.15, ease: "easeInOut" }}
-                    className="absolute top-0 left-0 w-1/3 h-[1px]"
-                >
-                    <div className={`w-full h-full bg-gradient-to-r from-transparent ${gradient.replace('from-', 'via-').split(' ')[0]} to-transparent opacity-60`} />
-                </motion.div>
-            </div>
-
-            {/* Content */}
-            <div className="relative z-10">
-                {/* Icon */}
-                <div className={`inline-flex p-2.5 rounded-xl bg-gradient-to-br ${gradient} mb-5 shadow-sm`}>
-                    <Icon className="w-5 h-5 text-white" strokeWidth={2} />
-                </div>
-
-                {/* Title */}
-                <h3 className="font-serif text-xl font-medium text-neutral-900 dark:text-white mb-2 tracking-tight flex items-center gap-2">
+                {/* Content */}
+                <h3 className="font-serif text-3xl font-medium text-neutral-900 dark:text-white mb-4 tracking-tight leading-none">
                     {title}
-                    <ArrowUpRight className="w-4 h-4 text-neutral-300 dark:text-neutral-700 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </h3>
-
-                {/* Description */}
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                <p className="text-base text-neutral-500 dark:text-neutral-400 leading-relaxed mb-6 max-w-sm">
                     {description}
                 </p>
+            </div>
+
+            {/* Bottom Graphic / Interactive Element */}
+            <div className="relative mt-8 h-32 w-full rounded-2xl bg-neutral-200/50 dark:bg-neutral-800/50 overflow-hidden border border-neutral-100 dark:border-neutral-700/50">
+                {/* Simulated abstract UI / pattern */}
+                <div className="absolute inset-0 p-4 flex flex-col gap-2">
+                    <div className="h-2 w-1/2 bg-white/40 dark:bg-neutral-700/40 rounded-full animate-pulse" />
+                    <div className="h-2 w-3/4 bg-white/40 dark:bg-neutral-700/40 rounded-full" />
+                    <div className="h-2 w-2/3 bg-white/40 dark:bg-neutral-700/40 rounded-full" />
+                </div>
+
+                {/* Decorative Gradient Orb */}
+                <div className={`absolute -bottom-10 -right-10 w-32 h-32 bg-gradient-to-br ${gradient} rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity`} />
+            </div>
+
+            {/* Hover Arrow */}
+            <div className="absolute top-10 right-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="p-3 rounded-full bg-white dark:bg-black border border-neutral-200 dark:border-neutral-700 shadow-sm">
+                    <ArrowRight className="w-5 h-5 text-neutral-900 dark:text-white" />
+                </div>
             </div>
         </motion.div>
     );
