@@ -1,0 +1,68 @@
+# Session Management
+
+SwiftJS offers a robust session middleware with pluggable storage backends.
+
+## Installation
+
+```typescript
+import { createApp } from 'swiftjs-core';
+import { sessionPlugin } from 'swiftjs-core';
+
+const app = createApp({
+  cookieSecret: 'your-secret-key', // Required for signing session cookies
+});
+
+app.register(
+  sessionPlugin({
+    store: 'memory', // 'memory' or 'redis'
+    cookieName: 'sid',
+    maxAge: 86400 * 1000, // 1 day
+  })
+);
+```
+
+## Using Sessions
+
+The session object is available at `ctx.session`.
+
+```typescript
+app.post('/login', async ctx => {
+  // Set session data
+  await ctx.session.set('userId', 123);
+  await ctx.session.set('role', 'admin');
+
+  return { success: true };
+});
+
+app.get('/me', async ctx => {
+  // Read session data
+  const userId = await ctx.session.get('userId');
+
+  if (!userId) {
+    return ctx.status(401).json({ error: 'Not logged in' });
+  }
+
+  return { userId };
+});
+
+app.post('/logout', async ctx => {
+  // Destroy session
+  await ctx.session.destroy();
+  return { success: true };
+});
+```
+
+## Redis Store
+
+For production, use Redis to persist sessions across restarts.
+
+```typescript
+app.register(
+  sessionPlugin({
+    store: 'redis',
+    redis: {
+      url: process.env.REDIS_URL,
+    },
+  })
+);
+```

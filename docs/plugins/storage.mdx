@@ -1,0 +1,78 @@
+# File Upload & Storage
+
+Handling file uploads and remote storage is a common requirement for modern web applications. SwiftJS provides an optimized multipart parser and a unified storage abstraction.
+
+## Multipart Uploads
+
+SwiftJS uses a high-performance stream-based parser to handle multipart form data without loading the entire file into memory.
+
+```typescript
+app.post('/upload', async (ctx) => {
+  const files = ctx.files || [];
+  const avatar = files.find(f => f.fieldname === 'avatar');
+
+  if (!avatar) throw new BadRequestError('No avatar uploaded');
+
+  // avatar.data is a Buffer
+  // Save or process the file...
+  
+  return 'File uploaded successfully';
+});
+```
+
+## Cloud Storage (S3 / R2)
+
+For production, we recommend using the `@swiftjs/plugin-s3` to handle files on Amazon S3, Cloudflare R2, or DigitalOcean Spaces.
+
+### Configuration
+```typescript
+import { s3Plugin } from '@swiftjs/plugin-s3';
+
+app.use(s3Plugin({
+  region: 'us-east-1',
+  bucket: 'my-bucket',
+  credentials: {
+    accessKeyId: process.env.S3_KEY,
+    secretAccessKey: process.env.S3_SECRET
+  }
+}));
+```
+
+### Usage
+```typescript
+app.post('/profile-pic', async (ctx) => {
+  const file = await ctx.file('image');
+  
+  // Upload directly to S3
+  const url = await ctx.s3.upload(file.stream, {
+    key: `avatars/${ctx.user.id}.png`,
+    contentType: file.type,
+    acl: 'public-read'
+  });
+
+  return { url };
+});
+```
+
+## Direct Streaming
+
+You can also stream data directly to storage to keep memory usage near zero.
+
+```typescript
+app.get('/backup', async (ctx) => {
+  const readable = getLargeStream();
+  await ctx.s3.upload(readable, { key: 'backups/db.gz' });
+  return 'Backup started';
+});
+```
+
+## Security Best Practices
+
+1. **Sanitize Filenames**: Never trust the filename provided by the client. Always generate a unique ID (like a UUID) for stored files.
+2. **Validate MIME Types**: Check the actual file content, don't just rely on the extension provided in the headers.
+3. **Set Permissions**: Use Private buckets by default and serve files through **Signed URLs** for authorized access.
+
+```typescript
+// Generate a 15-minute temporary download link
+const downloadUrl = await ctx.s3.getSignedUrl('my-secret-file.pdf', { expiresIn: 900 });
+```

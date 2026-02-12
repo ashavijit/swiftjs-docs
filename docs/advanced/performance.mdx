@@ -1,0 +1,82 @@
+# Performance & Caching
+
+SwiftJS is optimized for speed out of the box, but high-scale applications require strategic performance tuning and caching layers.
+
+## Built-in Optimizations
+
+- **Context Pooling**: Automatically reuses `HttpContext` objects to minimize GC pressure.
+- **Radix Router**: Zero-allocation path matching.
+- **Iterative Middlewares**: Avoids recursive stack overhead.
+
+## Caching Strategies
+
+### 1. In-Memory Cache
+Best for data that changes infrequently and needs sub-millisecond access.
+
+```typescript
+import { memoryCache } from 'swiftjs-core';
+
+app.use(performancePlugin({
+  cache: memoryCache({ maxSize: 1000, ttl: 60000 })
+}));
+
+app.get('/stats', async (ctx) => {
+  const data = await ctx.cache.getOrSet('stats', () => fetchStats());
+  return data;
+});
+```
+
+### 2. Distributed Cache (Redis)
+Required for multi-instance deployments where cache consistency is important.
+
+```typescript
+import { redisCache } from '@swiftjs/plugin-redis';
+
+app.use(redisCache({ host: 'localhost', port: 6379 }));
+```
+
+## Response Compression
+SwiftJS supports native response compression (Gzip, Brotli) to reduce payload size.
+
+```typescript
+import { compression } from 'swiftjs-core';
+
+app.use(compression({ level: 6, threshold: 1024 }));
+```
+
+## Rate Limiting
+Protect your API from abuse using the built-in rate limiter.
+
+```typescript
+import { rateLimit } from 'swiftjs-core';
+
+app.use(rateLimit({
+  window: '1m',
+  max: 100, // 100 requests per minute per IP
+  store: 'redis' // Optional: use Redis for multi-node sync
+}));
+```
+
+## Performance Monitoring
+Track your API's health with real-time metrics.
+
+```typescript
+app.get('/metrics', (ctx) => {
+   return ctx.getPerformanceStats(); 
+   // Returns { poolSize, activeRequests, p99Header, etc }
+});
+```
+
+## Optimization Checklist
+
+1. **Use Bun** 🥯: Enable Bun's native optimizations for 40-70% higher throughput.
+2. **Avoid Heavy Middlewares**: Keep global middleware minimal; apply specific ones only where needed.
+3. **Prefer `ctx.json`**: It is optimized for faster serialization compared to native `JSON.stringify`.
+4. **Stream Large Responses**: For file downloads or large datasets, use `ctx.stream()` to keep memory usage low.
+
+```typescript
+app.get('/large-file', (ctx) => {
+  const stream = fs.createReadStream('data.csv');
+  return ctx.stream(stream, 'text/csv');
+});
+```

@@ -1,0 +1,129 @@
+# Routing
+
+SwiftJS offers a flexible routing system that supports both **File-based Routing** (recommended) and **Code-based Routing**. Both methods utilize the high-performance Radix Router under the hood.
+
+## File-based Routing
+
+SwiftJS embraces a Next.js-inspired file-based routing system. Routes are automatically generated based on your file structure in the `src/routes` directory.
+
+### Conventions
+
+- **Files:** Files ending in `.[method].ts` become routes.
+  - `index.get.ts` → `GET /`
+  - `users.post.ts` → `POST /users`
+- **Directories:** Directories create URL path segments.
+  - `api/users.get.ts` → `GET /api/users`
+- **Dynamic Params:** Files or directories in `[]` create dynamic parameters.
+  - `users/[id].get.ts` → `GET /users/:id`
+  - `posts/[slug]/comments.get.ts` → `GET /posts/:slug/comments`
+
+### Example Structure
+
+```
+src/routes/
+├── index.get.ts           # GET /
+├── health.get.ts          # GET /health
+├── users/
+│   ├── index.get.ts       # GET /users
+│   ├── index.post.ts      # POST /users
+│   └── [id].get.ts        # GET /users/:id
+└── api/
+    └── v1/
+        └── posts.get.ts   # GET /api/v1/posts
+```
+
+### Route Handlers
+
+A route file exports a default handler function and optional configuration.
+
+```typescript
+// src/routes/users/[id].get.ts
+import type { Context } from 'swiftjs-core';
+import { z } from 'swiftjs-core';
+
+// Default export is the handler
+export default function handler(ctx: Context) {
+  const { id } = ctx.params;
+  return ctx.json({ id, name: 'User ' + id });
+}
+
+// Optional validation schema
+export const params = z.object({
+  id: z.coerce.number(), // Automatically converts string to number
+});
+
+// Optional route configuration
+export const config = {
+  middleware: [authMiddleware],
+};
+
+// Documentation
+export const summary = 'Get user by ID';
+export const tags = ['Users'];
+```
+
+## Code-based Routing
+
+For simple apps or specific use cases, you can define routes programmatically.
+
+```typescript
+import { createApp } from 'swiftjs-core';
+
+const app = createApp();
+
+app.get('/users', ctx => {
+  return { users: [] };
+});
+
+app.post('/users', ctx => {
+  const body = ctx.body;
+  // ...
+});
+
+// Route grouping
+app.group('/api/v1', api => {
+  api.get('/status', () => ({ status: 'ok' }));
+
+  api.group('/users', users => {
+    users.get('/', () => []);
+    users.get('/:id', ctx => ctx.params.id);
+  });
+});
+```
+
+## Performance: Radix Router
+
+SwiftJS uses a highly optimized **Radix Tree Router** for matching routes.
+
+### Features
+
+- **O(1) Static Route Matching:** Static routes (e.g., `/health`) are cached in a Map for instant lookup, bypassing the tree traversal entirely.
+- **Parametric Optimization:** The tree is optimized to minimize dynamic parameter overhead.
+- **Zero-Allocation Matching:** The router uses reusable match objects to reduce garbage collection pressure.
+- **Hybrid Sync/Async Execution:** Routes that don't need async/await are executed synchronously on the stack, bypassing Promise allocation and microtask queues completely.
+- **Path Compression:** Common prefixes are compressed to reduce tree depth.
+
+This architecture ensures that route matching is never the bottleneck, even with thousands of routes.
+
+## Route Parameters
+
+Access route parameters via `ctx.params`.
+
+```typescript
+app.get('/users/:id/posts/:postId', ctx => {
+  const { id, postId } = ctx.params;
+  // ...
+});
+```
+
+## Query Parameters
+
+Access parsed query string parameters via `ctx.query`.
+
+```typescript
+// GET /search?q=swiftjs&limit=10
+app.get('/search', ctx => {
+  const { q, limit } = ctx.query;
+  // q = 'swiftjs', limit = '10' (string)
+});
+```

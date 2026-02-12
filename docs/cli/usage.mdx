@@ -1,0 +1,120 @@
+# CLI Reference
+
+The SwiftJS CLI (`swiftjs-cli`) allows you to scaffold, develop, build, and manage SwiftJS applications.
+
+## Global Installation
+
+```bash
+npm install -g swiftjs-cli
+```
+
+Or use via `npx` (recommended for one-off commands):
+
+```bash
+npx swiftjs <command>
+```
+
+## Commands
+
+### `init` (or `create-swiftjs-app`)
+
+Scaffold a new project interactively.
+
+```bash
+swiftjs init [project-name]
+# or
+npx create-swiftjs-app my-app
+```
+
+### `dev`
+
+Start the development server with hot reloading, TypeScript support, and dev tools.
+
+```bash
+swiftjs dev
+```
+
+**Options:**
+
+- `-p, --port <number>`: Port to listen on (default: 3000)
+- `-H, --host <host>`: Host to bind to (default: localhost)
+
+### `build`
+
+Build the application for production. Compiles TypeScript to JavaScript in the `dist` folder.
+
+```bash
+swiftjs build
+```
+
+**Options:**
+
+- `--out-dir <dir>`: Output directory (default: dist)
+- `--entry <file>`: Entry file (default searches for src/index.ts)
+
+### `start`
+
+Start the production server. Expects the app to be built first.
+
+```bash
+swiftjs start
+```
+
+**Options:**
+
+- `-p, --port <number>`: Port to listen on (default: 3000)
+
+### `generate`
+
+Generate new components from templates.
+
+```bash
+swiftjs generate <type> <name>
+# Alias: swiftjs g
+```
+
+**Types:**
+
+- `route`: Create a new route file (e.g., `swiftjs g route users/create`)
+- `middleware`: Create a middleware file
+- `plugin`: Create a new plugin
+- `service`: Create a service class
+
+### `routes`
+
+List all registered routes in your application. useful for debugging routing issues.
+
+```bash
+swiftjs routes
+```
+
+### `info`
+
+Display information about the current project environment.
+
+```bash
+swiftjs info
+```
+
+### `clean`
+
+Clean build artifacts (`dist`, `node_modules/.cache`, etc.).
+
+```bash
+swiftjs clean
+```
+
+## Automation
+
+You can use the CLI in your `package.json` scripts:
+
+```json
+{
+  "scripts": {
+    "dev": "swiftjs dev",
+    "build": "swiftjs build",
+    "start": "swiftjs start",
+    "routes": "swiftjs routes"
+  }
+}
+```

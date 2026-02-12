@@ -1,0 +1,97 @@
+# Authentication & Authorization
+
+Securing your API is a first-class citizen in SwiftJS. The framework provides flexible abstractions for common authentication patterns like JWT and OAuth2.
+
+## Authentication Strategies
+
+### 1. JSON Web Tokens (JWT)
+
+For standard JWT authentication, use the `authPlugin` provided by the core framework.
+
+```typescript
+import { createApp, authPlugin } from 'swiftjs-core';
+
+const app = createApp();
+
+app.register(authPlugin({
+  secret: process.env.JWT_SECRET!,
+  expiresIn: 3600,
+  exclude: ['/auth/login', '/public']
+}));
+
+// Route protection
+app.get('/me', (ctx) => {
+  const user = ctx.state.get('user'); // Set by authPlugin
+  return user;
+});
+```
+
+### 2. OAuth2
+
+The `oauth2Plugin` provides a unified interface for social login (Google, GitHub, etc.).
+
+```typescript
+import { oauth2Plugin, GoogleStrategy } from '@swiftjs/plugin-oauth2';
+
+app.register(oauth2Plugin({
+  providers: {
+    google: new GoogleStrategy({
+      clientId: '...',
+      clientSecret: '...',
+      callbackUrl: 'http://localhost:3000/auth/google/callback'
+    })
+  }
+}));
+
+// Initiation
+app.get('/login/google', (ctx) => {
+  ctx.oauth2.use('google').redirect();
+});
+
+// Callback
+app.get('/auth/google/callback', async (ctx) => {
+  const { profile } = await ctx.oauth2.use('google').callback();
+  ctx.state.set('user', profile);
+  return 'Logged in!';
+});
+```
+
+## Authorization & RBAC
+
+Role-Based Access Control (RBAC) ensures users can only access resources they are permitted to.
+
+```typescript
+import { guard } from 'swiftjs-core';
+
+// Using the guard helper
+app.get('/admin/stats', guard('admin'), (ctx) => {
+  return 'Welcome Admin';
+});
+
+// Manual check
+const adminOnly = async (ctx, next) => {
+  const user = ctx.state.get('user');
+  if (user?.role !== 'admin') {
+    throw new ForbiddenError('Admin access required');
+  }
+  await next();
+};
+```
+
+## Role-Based Permissions Helper
+For complex applications, use a dedicated permissions registry.
+
+```typescript
+import { Guard } from 'swiftjs-core';
+
+app.get('/posts/:id/edit', Guard.can('edit_post'), (ctx) => {
+    // ...
+});
+```
+
+## Best Practices
+
+1. **Secure Secrets**: Never hardcode JWT secrets or OAuth client secrets. Use [Environment Variables](../core/configuration.mdx).
+2. **Short-Lived Tokens**: Use short expiration times for access tokens and leverage refresh tokens for long-lived sessions.
+3. **HTTP-Only Cookies**: If storing tokens in cookies, always set `httpOnly: true` and `secure: true` to prevent XSS attacks.
+4. **Rate Limit Auth Routes**: Always apply [Rate Limiting](../advanced/performance.mdx) to `/login` and `/register` endpoints to prevent brute-force attacks.

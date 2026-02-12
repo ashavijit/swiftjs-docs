@@ -1,0 +1,67 @@
+# Security Best Practices
+
+SwiftJS is built with a "Secure-by-Default" mindset, but building truly safe applications requires vigilance and adherence to modern security standards.
+
+## Common Vulnerabilities & Protections
+
+### 1. Cross-Site Scripting (XSS)
+While SwiftJS encodes responses as JSON by default, always be careful when serving HTML or reflecting user input.
+- **Protection**: Use the `helmet()` middleware to set safe Content-Security-Policy (CSP) headers.
+
+```typescript
+import { helmet } from 'swiftjs-core';
+app.use(helmet());
+```
+
+### 2. SQL Injection
+Handled at the driver/ORM level.
+- **Protection**: Never interpolate strings into raw SQL queries. Use Prisma, Drizzle, or parameterized queries.
+
+### 3. Brute Force Attacks
+Repeatedly trying passwords or sensitive endpoints.
+- **Protection**: Use the built-in [Rate Limiter](performance.mdx) on all sensitive routes.
+
+## Hardening Techniques
+
+### Security Headers
+Maximize your security score (A+ on Mozilla Observatory) with the right headers.
+
+```typescript
+app.use(securityHeaders({
+  contentSecurityPolicy: true,
+  strictTransportSecurity: { maxAge: 31536000, includeSubDomains: true },
+  xFrameOptions: 'DENY',
+  xXssProtection: true
+}));
+```
+
+### Payload Limits
+Prevent Denial of Service (DoS) attacks by limiting the size of incoming request bodies.
+
+```typescript
+app.listen(3000, {
+  bodyLimit: '1mb' // Reject payloads larger than 1MB
+});
+```
+
+### Environment Sanitation
+Sensitive keys (Database URLs, API Secrets) should never be in your code.
+- **Action**: Use the built-in `loadEnv()` and validate your environment variables with Zod at startup.
+
+```typescript
+const EnvSchema = z.object({
+  DATABASE_URL: z.string().url(),
+  APP_SECRET: z.string().min(32)
+});
+
+loadEnv();
+const env = EnvSchema.parse(process.env);
+```
+
+## Security Checklist
+
+1. **Validate All Input**: Use Zod schemas for every route.
+2. **Disable X-Powered-By**: SwiftJS disables this by default to prevent technology fingerprinting.
+3. **Use HTTPS**: In production, always serve your application behind an SSL/TLS terminator (Nginx, Caddy, or Cloudflare).
+4. **Regular Audits**: Run `npm audit` or `bun audit` regularly to keep your dependencies secure.
+5. **Least Privilege**: Ensure your database user only has the permissions required for the application's functioning.

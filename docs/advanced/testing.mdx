@@ -1,0 +1,85 @@
+# Testing
+
+Building reliable APIs requires a comprehensive testing strategy. SwiftJS is designed to be testable from the ground up, with first-class support for unit and integration testing.
+
+## Integration Testing
+
+We recommend using our optimized `TestClient` which allows you to run requests against your application without actually binding to a network port.
+
+### Basic Test
+```typescript
+import { Swift } from 'swiftjs-core';
+import { describe, it, expect } from 'vitest';
+
+const app = new Swift();
+app.get('/ping', () => 'pong');
+
+describe('API Integration', () => {
+  it('should return pong', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/ping'
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toBe('pong');
+  });
+});
+```
+
+## Mocking dependencies
+
+Because SwiftJS uses a Dependency Injection container, mocking external services (like databases or APIs) is incredibly simple.
+
+```typescript
+it('should handle user creation', async () => {
+  // Mock the UserService
+  app.container.register('userService', () => ({
+    create: vi.fn().mockResolvedValue({ id: 1, name: 'Test' })
+  }), { overwrite: true });
+
+  const res = await app.inject({
+    method: 'POST',
+    url: '/users',
+    body: { name: 'Test' }
+  });
+
+  expect(res.statusCode).toBe(201);
+});
+```
+
+## Unit Testing Controllers
+
+You can test individual handlers by manually creating a `HttpContext`.
+
+```typescript
+import { createMockContext } from 'swiftjs-core/testing';
+
+it('should greet user', async () => {
+  const ctx = createMockContext({
+    params: { name: 'Swift' }
+  });
+  
+  const result = await welcomeController(ctx);
+  expect(result).toBe('Welcome Swift');
+});
+```
+
+## Recommended Tooling
+
+- **Test Runner**: [Vitest](https://vitest.dev/) (Native ESM & Bun support).
+- **Assertion**: Vitest's `expect`.
+- **Mocking**: `vi` from Vitest or `testdouble.js`.
+
+## Best Practices
+
+1. **Clean Slate**: Use `beforeEach` to reset your DI container or database state between tests.
+2. **Avoid Network**: Use `app.inject()` instead of `app.listen()` and `fetch()` to keep tests fast and isolated.
+3. **Snapshot Testing**: Use snapshot testing for large JSON responses to easily detect regressions in your API structure.
+
+```typescript
+it('should return complex schema', async () => {
+  const res = await app.inject({ url: '/complex' });
+  expect(res.json()).toMatchSnapshot();
+});
+```

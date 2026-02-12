@@ -1,0 +1,120 @@
+# Validation
+
+SwiftJS has first-class support for **Zod** schema validation. It automatically validates request data and provides type-safe access to the result ensuring your handlers only deal with valid data.
+
+## Usage
+
+SwiftJS exports `z` from `swiftjs-core`, which is a re-export of the Zod library.
+
+```typescript
+import { z, createApp } from 'swiftjs-core';
+
+app.post(
+  '/users',
+  ctx => {
+    // Types are inferred!
+    // name: string, email: string
+    const { name, email } = ctx.body;
+    return { success: true };
+  },
+  {
+    // Define validation schemas
+    body: z.object({
+      name: z.string().min(2),
+      email: z.string().email(),
+    }),
+  }
+);
+```
+
+## Validation Scopes
+
+You can validate three parts of the request:
+
+1. **Body:** `ctx.body`
+2. **Query:** `ctx.query`
+3. **Params:** `ctx.params`
+
+```typescript
+app.get(
+  '/search/:category',
+  ctx => {
+    const { category } = ctx.params; // string
+    const { q, limit } = ctx.query; // string, number
+    return { category, q, limit };
+  },
+  {
+    params: z.object({
+      category: z.enum(['books', 'movies']),
+    }),
+    query: z.object({
+      q: z.string().min(1),
+      limit: z.coerce.number().min(1).max(100).default(20),
+    }),
+  }
+);
+```
+
+> **Note:** Use `z.coerce` for query and params since they are originally strings in the URL.
+
+## File-based Routing
+
+In file-based routing, you export the schemas separately.
+
+```typescript
+// src/routes/users.post.ts
+import { z, Context } from 'swiftjs-core';
+
+export default function handler(ctx: Context) {
+  const { name, email } = ctx.body; // Typed automatically in handler
+  return { id: 1, name, email };
+}
+
+// Export specific schemas
+export const body = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+});
+
+export const query = z.object({
+  referral: z.string().optional(),
+});
+```
+
+## Error Handling
+
+When validation fails, SwiftJS automatically returns a `400 Bad Request` response with details about the errors.
+
+```json
+{
+  "error": "Validation Error",
+  "message": "Validation failed",
+  "details": [
+    {
+      "code": "invalid_string",
+      "validation": "email",
+      "message": "Invalid email",
+      "path": ["email"]
+    }
+  ]
+}
+```
+
+You can customize this behavior using the `onError` hook if needed.
+
+## Type Inference
+
+The `Context` object in your handler will automatically infer the types from your validation schemas when using the `config` object or file exports.
+
+For manual typing (e.g., in separate functions):
+
+```typescript
+import { z } from 'swiftjs-core';
+
+const UserSchema = z.object({
+  name: z.string(),
+  age: z.number(),
+});
+
+type User = z.infer<typeof UserSchema>;
+```

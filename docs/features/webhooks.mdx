@@ -1,0 +1,65 @@
+# Webhooks
+
+SwiftJS provides a secure way to consume webhooks from third-party services like Stripe, GitHub, or Shopify.
+
+## Features
+
+- **Signature Verification**: Built-in HMAC verification.
+- **Timing Safe**: Prevents timing attacks during signature validation.
+- **Registry Pattern**: manage multiple webhook endpoints easily.
+
+## Usage
+
+Use `webhookPlugin` to set up a listener.
+
+```typescript
+import { createApp, webhookPlugin } from 'swiftjs-core';
+
+const app = createApp();
+
+// Initialize plugin
+const webhooks = webhookPlugin({
+  basePath: '/webhooks',
+});
+
+// Register webhook handlers
+webhooks.registry.register({
+  name: 'stripe', // Listens on POST /webhooks/stripe
+  secret: process.env.STRIPE_WEBHOOK_SECRET,
+  signatureHeader: 'stripe-signature',
+  handler: async (payload, ctx) => {
+    // payload is the parsed JSON body or string
+    console.log('Payment received:', payload);
+  },
+});
+
+webhooks.registry.register({
+  name: 'github', // Listens on POST /webhooks/github
+  secret: process.env.GITHUB_SECRET,
+  signatureHeader: 'x-hub-signature-256',
+  signaturePrefix: 'sha256=', // GitHub sends sha256=...
+  handler: async (payload, ctx) => {
+    console.log('Push event:', payload);
+  },
+});
+
+// Register plugin to the app
+app.register(webhooks);
+```
+
+## Configuration
+
+```typescript
+interface WebhookConfig<T = unknown> {
+  name: string;
+  secret?: string; // If omitted, signature check is skipped
+  signatureHeader?: string; // default: 'x-webhook-signature'
+  signaturePrefix?: string; // e.g., 'sha256='
+  handler: (payload: T, ctx: Context) => void | Promise<void>;
+  validate?: (payload: Buffer, sig: string, key: string) => boolean;
+}
+```
+
+## Security
+
+The built-in validator uses `crypto.timingSafeEqual` to compare HMAC signatures, preventing timing attacks.

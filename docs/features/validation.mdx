@@ -1,0 +1,66 @@
+# Validation & Schemas
+
+Type safety shouldn't stop at compile time. SwiftJS integrates deeply with **Zod** to provide robust runtime validation for your APIs.
+
+## Input Validation
+
+You can validate query parameters, path parameters, and request bodies using the `validator` middleware.
+
+```typescript
+import { validator } from 'swiftjs-core';
+import { z } from 'zod';
+
+const UserSchema = z.object({
+  username: z.string().min(3),
+  email: z.string().email(),
+  age: z.number().optional()
+});
+
+app.post('/register', validator('json', UserSchema), (ctx) => {
+  const user = ctx.body; // TypeScript knows 'user' matches UserSchema
+  return `Registered ${user.username}`;
+});
+```
+
+## Validation Targets
+
+The `validator` helper supports multiple targets:
+- `'json'`: Validates the request JSON body.
+- `'form'`: Validates the request Form (URL encoded) body.
+- `'query'`: Validates URL search parameters.
+- `'params'`: Validates route parameters (e.g., `:id`).
+- `'header'`: Validates request headers.
+
+## Customizing Error Responses
+
+When validation fails, SwiftJS returns a 400 Bad Request by default with the Zod issues. You can customize this globally.
+
+```typescript
+app.onError((error, ctx) => {
+  if (error instanceof ValidationError) {
+    return ctx.status(422).json({
+      error: 'Validation Failed',
+      details: error.details
+    });
+  }
+});
+```
+
+## Type Inference
+
+One of the best features of using Zod with SwiftJS is automatic type inference.
+
+```typescript
+type User = z.infer<typeof UserSchema>;
+
+app.post('/user', validator('json', UserSchema), (ctx) => {
+  const data: User = ctx.body as User; // fully type-safe
+  return data;
+});
+```
+
+## Best Practices
+
+1. **Keep Schemas Reusable**: Define your Zod schemas in a dedicated `schemas/` folder to share them between your backend and frontend (if using TypeScript).
+2. **Strict Validation**: Use `.strict()` on your object schemas to prevent unpredictable extra fields in request bodies.
+3. **Default Values**: Leverage `.default()` in Zod to ensure your application logic always has the data it needs.

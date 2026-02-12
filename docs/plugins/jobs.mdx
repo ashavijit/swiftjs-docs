@@ -1,0 +1,115 @@
+# Background Jobs & Workers
+
+Efficiency in web applications often depends on moving heavy workloads out of the request-response cycle. SwiftJS provides a built-in task scheduling system through the `jobsPlugin`.
+
+## Overview
+
+The SwiftJS Scheduler supports three types of execution triggers:
+- **Cron Jobs**: Execute tasks using standard 5-field cron expressions.
+- **Interval Jobs**: Execute tasks every N seconds, minutes, or hours.
+- **Delayed/One-time Tasks**: Execute a task at a specific `Date` or `timestamp`.
+- **Persistence**: Supports `MemoryJobStore` (default) and `RedisJobStore` for job state persistence.
+
+## Setup
+
+The jobs system is integrated via the `jobsPlugin`.
+
+```typescript
+import { createApp, jobsPlugin, RedisJobStore } from 'swiftjs-core';
+
+const app = createApp();
+
+app.register(jobsPlugin({
+  store: new RedisJobStore({ url: 'redis://localhost:6379' }),
+  autoStart: true,
+  onJobError: (job, err) => console.error(`Job ${job.name} failed:`, err)
+}));
+```
+
+## Creating Jobs
+
+Jobs are added via the `app.scheduler` instance (or `ctx.scheduler` inside handlers).
+
+### 1. Cron Job
+```typescript
+app.scheduler.addJob({
+  name: 'daily-report',
+  schedule: { cron: '0 0 * * *' }, // Every midnight
+  handler: async () => {
+    await generateDailyReport();
+  }
+});
+```
+
+### 2. Interval Job
+```typescript
+app.scheduler.addJob({
+  name: 'sync-data',
+  schedule: { interval: '5m' }, // Every 5 minutes
+  handler: async () => {
+    await syncWithExternalProvider();
+  }
+});
+```
+
+### 3. One-time Delayed Task
+```typescript
+app.post('/remind-me', async (ctx) => {
+  const { delayMs, message } = ctx.body;
+  
+  ctx.scheduler.addJob({
+    name: 'reminder',
+    schedule: { date: Date.now() + delayMs },
+    handler: async () => {
+      await sendReminder(message);
+    }
+  });
+  
+  return 'Reminder scheduled';
+});
+```
+
+## Job Management
+
+You can manage jobs dynamically at runtime.
+
+```typescript
+// Run a job immediately regardless of schedule
+await app.scheduler.runNow('job-id');
+
+// Pause/Resume jobs
+app.scheduler.pauseJob('job-id');
+app.scheduler.resumeJob('job-id');
+
+// Remove a job
+app.scheduler.removeJob('job-id');
+```
+
+## Execution Options
+
+Fine-tune job behavior using the `options` field.
+
+```typescript
+app.scheduler.addJob({
+  name: 'heavy-task',
+  schedule: { interval: '1h' },
+  handler: async () => { /* ... */ },
+  options: {
+    maxRetries: 3,
+    timeout: 60000, // 1 minute timeout
+    allowConcurrent: false // Prevent overlapping runs
+  }
+});
+```
+
+## Graceful Shutdown
+
+The `jobsPlugin` automatically hooks into the application lifecycle. When `app.close()` is called, the scheduler will:
+1. Stop accepting new job executions.
+2. Wait for currently running jobs to complete (up to 30 seconds).
+
+## Best Practices
+
+1. **Idempotency**: Ensure your job handlers can be safely run multiple times without unintended side effects.
+2. **Atomic Stores**: Use `RedisJobStore` in production to ensure job state is shared across multiple instances of your application.
+3. **Monitor Failures**: Always provide an `onJobError` callback in the plugin options to track and alert on background task failures.

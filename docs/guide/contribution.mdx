@@ -1,0 +1,44 @@
+# Contribution Guide
+
+First off, thank you for considering contributing to SwiftJS! It’s people like you who make the framework better for everyone.
+
+## Development Setup
+
+1. **Fork and Clone**: Fork the repository and clone it to your local machine.
+2. **Install**: We recommend using Bun for development.
+   ```bash
+   bun install
+   ```
+3. **Build Core**: Before starting work on plugins, ensure the core is built.
+   ```bash
+   cd packages/core && bun run build
+   ```
+
+## Coding Standards
+
+- **TypeScript**: All new code must be written in TypeScript with strict type checking.
+- **ESLint/Prettier**: Run `bun run lint` before committing to ensure formatting consistency.
+- **No Emojis in Commit Messages**: Keep commit messages professional and descriptive.
+- **Testing**: New features MUST include unit or integration tests in the `tests/` directory.
+
+## Pull Request Process
+
+1. **Create a Branch**: `git checkout -b feat/your-feature-name`.
+2. **Commit Small**: Make small, incremental commits with clear messages.
+3. **Push and Open PR**: Ensure your PR has a clear description of:
+   - What the change does.
+   - Why it is necessary.
+   - How you tested it.
+4. **Code Review**: At least one maintainer must review and approve your PR before merging.
+
+## Areas for Contribution
+
+- **Runtime Adapters**: Deno, Azure Functions, etc.
+- **Plugins**: Database integrations, observability, more OAuth providers.
+- **Documentation**: Fixing typos, improving clarity, or translating guides.
+- **Performance**: Benchmarking and identifying bottlenecks in the hot-path.
+
+---
+
+> [!IMPORTANT]
+> By contributing to SwiftJS, you agree that your contributions will be licensed under its [MIT License](../../LICENSE).

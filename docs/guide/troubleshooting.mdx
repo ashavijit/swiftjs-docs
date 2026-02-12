@@ -1,0 +1,44 @@
+# Troubleshooting & FAQ
+
+Common issues encountered when working with SwiftJS and their recommended solutions.
+
+## Common Issues
+
+### 1. "TypeError: ctx.user is undefined"
+**Problem**: You are trying to access a context decoration that hasn't been registered or populated.
+**Solution**: Ensure your [Authentication Middleware](../features/authentication) or specific decoration is registered *before* the route that uses it.
+
+### 2. "Bun.nanoseconds is not a function"
+**Problem**: You are running a Bun-optimized version of the framework on Node.js using an incorrect adapter.
+**Solution**: SwiftJS usually auto-detects the runtime. If you've forced `BunAdapter`, ensure you are running with `bun run`.
+
+### 3. "Body too large"
+**Problem**: The incoming request body exceeds the framework default limit.
+**Solution**: Increase the `bodyLimit` in your `Swift` constructor options.
+
+```typescript
+const app = new Swift({ bodyLimit: '5mb' });
+```
+
+### 4. "ZodError: Invalid input"
+**Problem**: Your request doesn't match the schema defined in your [Validation](../features/validation).
+**Solution**: Check the error payload returned by SwiftJS. It contains a detailed `path` and `message` for which field failed validation.
+
+## Frequently Asked Questions
+
+### Is SwiftJS faster than Fastify?
+On Bun, SwiftJS is consistently faster for parameterized routing due to the zero-allocation Radix Router and iterative middleware engine. On Node.js, they are comparable, though SwiftJS offers lower GC pressure.
+
+### Can I use SwiftJS with Express middlewares?
+Yes! SwiftJS provides a `fromExpress()` utility to convert legacy Express middlewares into SwiftJS native middlewares.
+
+### Does it support Serverless?
+Yes, use the `@swiftjs/adapter-lambda` for AWS Lambda or the `CloudflareAdapter` for Edge functions.
+
+### How do I handle file uploads?
+Use the built-in [Multipart Parser](../plugins/storage) or the S3 plugin for managed storage.
+
+## Getting Further Help
+- **GitHub Issues**: For bug reports and feature requests.
+- **Discord Community**: For real-time help and community discussions.
+- **Stack Overflow**: Use the `swiftjs` tag.

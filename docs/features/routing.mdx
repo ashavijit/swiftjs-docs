@@ -1,0 +1,73 @@
+# Routing System
+
+SwiftJS features a high-performance routing engine based on a **Radix Tree** structure. It is designed for ultra-low latency and zero-allocation matching for hot paths.
+
+## Basic Routes
+
+Routes are defined using the `app[method]` syntax.
+
+```typescript
+app.get('/users', (ctx) => 'List users');
+app.post('/users', (ctx) => 'Create user');
+app.put('/users/:id', (ctx) => 'Update user');
+app.delete('/users/:id', (ctx) => 'Delete user');
+```
+
+## Route Parameters
+
+Dynamic path segments are prefixed with a colon (`:`). They are automatically parsed and available in `ctx.params`.
+
+```typescript
+app.get('/posts/:category/:slug', (ctx) => {
+  const { category, slug } = ctx.params;
+  return `Post in ${category}: ${slug}`;
+});
+```
+
+### Wildcards
+Use an asterisk (`*`) to match any remaining path segments.
+
+```typescript
+app.get('/files/*', (ctx) => {
+  const filePath = ctx.params['*'];
+  return `Serving file: ${filePath}`;
+});
+```
+
+## Route Groups
+
+Organize your routes into logical groups using `app.group()`. Groups can share prefixes and middlewares.
+
+```typescript
+app.group('/api/v1', (group) => {
+  group.use(authMiddleware);
+
+  group.get('/profile', (ctx) => 'Your Profile');
+  group.get('/settings', (ctx) => 'Your Settings');
+});
+```
+
+## Versioning
+
+SwiftJS has built-in support for API versioning via headers, path segments, or query strings.
+
+```typescript
+import { versioningMiddleware } from 'swiftjs-core';
+
+app.use(versioningMiddleware({
+  type: 'header',
+  key: 'X-API-Version',
+  defaultVersion: '1.0.0'
+}));
+
+app.get('/data', (ctx) => {
+  const version = ctx.state.get('apiVersion');
+  if (version === '2.0.0') {
+    return { new: 'data' };
+  }
+  return { legacy: 'data' };
+});
+```
+
+## Performance Note
+The routing engine uses **Stack-based Traversal** instead of recursion. This prevents stack overflow errors and significantly reduces the overhead of deeply nested routes or numerous parameters.

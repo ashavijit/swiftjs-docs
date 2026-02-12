@@ -1,0 +1,94 @@
+# Middleware System
+
+Middlewares are the backbone of a SwiftJS application. They allow you to intercept, modify, and manage the request-response lifecycle.
+
+## Middleware Concept
+
+A middleware is an async function that receives the `HttpContext` and a `next` function.
+
+```typescript
+const loggerMiddleware = async (ctx, next) => {
+  const start = Date.now();
+  await next(); // Proceed to the next middleware or handler
+  const ms = Date.now() - start;
+  ctx.logger.info(`${ctx.req.method} ${ctx.req.url} - ${ms}ms`);
+};
+```
+
+## Execution Order
+
+SwiftJS use an **Onion Model** (similar to Koa) but implemented with a high-performance **Iterative Runner**.
+
+```text
+1. Global Middleware A (before next)
+  2. Route Middleware B (before next)
+    3. Target Handler (Executes)
+  4. Route Middleware B (after next)
+5. Global Middleware A (after next)
+```
+
+## Registering Middlewares
+
+### 1. Global Middleware
+Applies to every single request hitting your server.
+
+```typescript
+app.use(loggerMiddleware);
+```
+
+### 2. Route-Level Middleware
+Applies only to a specific endpoint.
+
+```typescript
+app.get('/secure', authMiddleware, (ctx) => 'Authorized');
+```
+
+### 3. Group Middleware
+Applies to a collection of routes.
+
+```typescript
+app.group('/admin', (group) => {
+  group.use(adminGuard);
+  
+  group.get('/panel', (ctx) => 'Admin Panel');
+});
+```
+
+## Terminating a Request
+
+A middleware can stop the chain by **not calling** `next()`.
+
+```typescript
+const ipFilter = async (ctx, next) => {
+  if (isBanned(ctx.ip)) {
+     return ctx.status(403).text('Banned');
+  }
+  await next();
+};
+```
+
+## Built-in Middlewares
+
+SwiftJS comes with a suite of optimized middlewares:
+- `cors()`: Cross-Origin Resource Sharing.
+- `helmet()`: Security header management.
+- `compress()`: Gzip/Brotli compression.
+- `rateLimit()`: Request throttling.
+- `session()`: Session state management.
+
+## Best Practices
+
+1. **Avoid Heavy Logic**: Don't perform expensive computations or blocking synchronous code in global middlewares.
+2. **Order Matters**: Put security headers and CORS at the top of the chain. Put body parsing and auth after them.
+3. **Error Catching**: While the framework has a global error handler, you can wrap `await next()` in a try-catch for local error auditing.
+
+```typescript
+const auditMiddleware = async (ctx, next) => {
+  try {
+    await next();
+  } catch (err) {
+    reportToSupport(err);
+    throw err; // Re-throw to let the global handler respond
+  }
+};
+```

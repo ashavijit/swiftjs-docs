@@ -1,0 +1,77 @@
+# Philosophy & Architecture
+
+SwiftJS is built with a "Performance-First" philosophy. This section dives into the internal mechanics that make the framework ultra-high performance.
+
+## Design Principles
+
+1. **Zero-Allocation where possible**: Minimizing object creation during request hot-paths (routing, parameter parsing).
+2. **Iterative over Recursive**: High-performance middleware execution using a pooled runner instead of recursive closures.
+3. **Runtime Agnostic**: A core engine that adapts to the execution environment (Node.js, Bun, Edge).
+4. **Declarative Security**: Secure-by-default headers, validation, and encoding.
+
+## Internal Architecture
+
+SwiftJS uses a layered architecture to separate concerns and optimize performance.
+
+```text
++---------------------------+
+|      Application Layer     |  <-- Your Controllers & Middlewares
++---------------------------+
+|      Framework Layer      |  <-- DI, Validation, Context Pool
++---------------------------+
+|       Routing Layer       |  <-- Radix Router (Zero-Alloc)
++---------------------------+
+|      Runtime Adapter      |  <-- BunAdapter / NodeAdapter
++---------------------------+
+|    Host Environment       |  <-- Bun Runtime / Node.js Runtime
++---------------------------+
+```
+
+### The Radix Router
+Unlike many frameworks that use Regular Expressions for routing, SwiftJS uses a custom **Radix Tree**.
+- **Static Routes**: O(1) lookup using internal Maps.
+- **Dynamic Routes**: O(k) where k is the number of segments, using a stack-based traversal to avoid function call overhead.
+
+### Dependency Injection (DI)
+The framework features a built-in DI container that supports multiple lifecycles:
+- **Singleton**: One instance for the entire application life.
+- **Transient**: A new instance every time it's requested.
+- **Request**: A new instance for every incoming HTTP request, automatically disposed of after the response.
+
+## Request Lifecycle
+
+Understanding how a request flows through SwiftJS is key to building efficient applications.
+
+1. **Raw Request Arrival**: The host runtime (Bun/Node) receives the TCP packet and passes it to the `Swift` instance.
+2. **Context Acquisition**: A `HttpContext` object is acquired from a **Thread-Safe Pool** to reduce GC pressure.
+3. **Routing Match**: The Radix Router identifies the target handler and extracts parameters.
+4. **Middleware Execution**: The iterative runner executes global and route-specific middlewares.
+5. **Controller Handling**: The target handler is called with the enriched `HttpContext`.
+6. **Response Serialization**: The return value is serialized (JSON/Text) and written to the wire.
+7. **Context Release**: The context is cleared and returned to the pool for reuse.
+
+## Request Lifecycle Diagram (ASCII)
+
+```text
+      [Client]
+         |
+    (1) Request
+         |
+ v-------v-------v
+ | Runtime Adapt |  (Node/Bun/Edge)
+ ^-------+-------^
+         |
+    (2) acquireContext() <---+ [Context Pool]
+         |                   |
+    (3) Radix Match          |
+         |                   |
+    (4) Middlewares          |
+         |                   |
+    (5) Controller handler   |
+         |                   |
+    (6) serialize & send     |
+         |                   |
+    (7) releaseContext() ----+
+         |
+    (Result Sent)
+```

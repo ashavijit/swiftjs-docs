@@ -1,0 +1,61 @@
+# Project Structure
+
+SwiftJS encourages a modular and clean project layout. While the framework doesn't enforce a strict directory structure, we recommend the following layouts for maintainability and scalability.
+
+## Default Recommended Structure
+
+For most applications, this structure provides a good balance between simplicity and organization.
+
+```text
+/
+├── .env                  # Environment variables
+├── package.json          # Dependencies and scripts
+├── tsconfig.json         # TypeScript configuration
+├── src/
+│   ├── app.ts            # Entry point
+│   ├── config/           # Application configuration
+│   ├── controllers/      # Route handlers
+│   ├── middlewares/      # Custom middlewares
+│   ├── models/           # Data models/schemas
+│   ├── services/         # Business logic & DI registrations
+│   └── utils/            # Shared utilities
+└── tests/                # Unit and integration tests
+```
+
+## Enterprise Layout
+
+For large-scale applications with multiple domains, a **Feature-based** or **Modular** structure is recommended.
+
+```text
+/src
+├── core/                 # Shared core infrastructure
+│   ├── errors/
+│   ├── logger.ts
+│   └── container.ts
+├── modules/              # Domain-specific modules
+│   ├── auth/             # Authentication domain
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   └── auth.schema.ts
+│   ├── users/            # User management domain
+│   └── orders/           # Ordering domain
+├── app.ts                # App initialization
+└── server.ts             # Server boot logic
+```
+
+## Key Directory Explanations
+
+### `src/controllers`
+Controllers handle incoming HTTP requests, interact with services, and return responses. They should keep logic minimal and focus on request/response management.
+
+### `src/services`
+Services contain the core business logic. They are typically registered in the **DI Container** and injected into controllers.
+
+### `src/middlewares`
+Middlewares intercept requests before they reach controllers. Common uses include authentication, logging, and CORS handling.
+
+## Best Practices
+
+1. **Keep `app.ts` Lean**: Move configuration and service registrations to separate files.
+2. **Domain Separation**: Group related logic (schemas, services, controllers) by feature rather than type.
+3. **Use DI for Services**: Avoid direct instantiation of services to facilitate easier testing and mocking.

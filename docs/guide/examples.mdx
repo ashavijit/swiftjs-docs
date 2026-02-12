@@ -1,0 +1,70 @@
+# Examples & Tutorials
+
+Explore practical examples and step-by-step tutorials to build real-world applications with SwiftJS.
+
+## Featured Tutorials
+
+### 1. [Building a REST API](./rest-api)
+
+Learn how to build a production-ready CRUD API using file-based routing, Zod validation, and proper error handling.
+
+- **Topics:** File Router, Validation, Models, Error Handling
+- **Level:** Beginner
+
+### 2. [Authentication with JWT](./authentication)
+
+Secure your API using JSON Web Tokens (JWT). Covers login, token generation, cookies, and protected routes.
+
+- **Topics:** Auth, Middleware, Cookies, Security
+- **Level:** Intermediate
+
+### 3. [Real-time Chat](./realtime)
+
+Build a real-time chat application using WebSockets.
+
+- **Topics:** WebSockets, Real-time events, Broadcasting
+- **Level:** Advanced
+
+## Code Snippets
+
+### Basic HTTP Server
+
+```typescript
+import { createApp } from 'swiftjs-core';
+const app = createApp();
+app.get('/', () => 'Hello World');
+app.listen().then(() => console.log('Running on :3000'));
+```
+
+### Static File Serving
+
+```typescript
+import fs from 'fs';
+import path from 'path';
+
+app.get('/public/*', ctx => {
+  const filePath = path.join(process.cwd(), ctx.path);
+  if (fs.existsSync(filePath)) {
+    return fs.readFileSync(filePath);
+  }
+  ctx.notFound();
+});
+```
+
+### Custom Middleware
+
+```typescript
+app.use(async (ctx, next) => {
+  console.log(`Request: ${ctx.method} ${ctx.path}`);
+  await next();
+});
+```
+
+### Error Handling
+
+```typescript
+app.addHook('onError', (ctx, err) => {
+  ctx.logger.error(err);
+  ctx.status(500).json({ error: 'Internal Error' });
+});
+```

@@ -1,0 +1,73 @@
+# Error Handling
+
+SwiftJS provides a unified way to handle both expected and unexpected errors, ensuring your API remains stable and provides meaningful feedback to users.
+
+## Global Error Handler
+
+You can define custom handlers for specific status codes (e.g., 500 for generic server errors).
+
+```typescript
+app.setErrorPage(500, (ctx) => {
+  const error = ctx.state.get('error') as Error;
+  ctx.logger.error(error);
+
+  return ctx.status(500).json({
+    success: false,
+    error: {
+      code: 500,
+      message: error.message || 'Internal Server Error'
+    }
+  });
+});
+```
+
+## Standard Framework Errors
+
+SwiftJS provides built-in error classes that carry HTTP status codes.
+
+```typescript
+import { NotFoundError, UnauthorizedError, BadRequestError } from 'swiftjs-core';
+
+app.get('/secret', (ctx) => {
+  if (!ctx.header('Authorization')) {
+    throw new UnauthorizedError('No token provided');
+  }
+  // ...
+});
+```
+
+## Production vs Development
+
+In production, you often want to hide internal error details (stack traces, database queries) from the end-user.
+
+```typescript
+app.onError((error, ctx) => {
+  const isProd = process.env.NODE_ENV === 'production';
+  
+  if (isProd && !error.isPublic) {
+    return ctx.status(500).json({ error: 'An unexpected error occurred' });
+  }
+  
+  return ctx.status(error.status || 500).json({
+    message: error.message,
+    stack: error.stack
+  });
+});
+```
+
+## Async Error Handling
+
+Because SwiftJS uses an iterative middleware runner and handles promises natively, you can safely use `throw` or `Promise.reject` in your async controllers without worrying about crashing the process.
+
+```typescript
+app.get('/data', async (ctx) => {
+  const data = await db.fetch(); // If this rejects, onError catches it
+  return data;
+});
+```
+
+## Best Practices
+
+1. **Use Custom Error Classes**: Create your own domain-specific error classes that extend `SwiftHttpError` to keep your error handling logic consistent.
+2. **Log Every Error**: Always ensure your global error handler logs the stack trace to your [Logging System](logging.mdx) for debugging.
+3. **User-Friendly Messages**: Never return raw database or system errors to the client. Always map them to clean, understandable messages.

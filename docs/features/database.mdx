@@ -1,0 +1,74 @@
+# Database Integration
+
+SwiftJS is database-agnostic. Whether you prefer SQL (PostgreSQL, MySQL, SQLite) or NoSQL (MongoDB, Redis), the framework provides patterns to integrate them cleanly using the Dependency Injection system.
+
+## Recommended ORMs / Query Builders
+
+| Type | Recommended Library |
+| :--- | :--- |
+| **SQL** | Prisma, Drizzle, Kysely |
+| **NoSQL** | Mongoose, Redis (ioredis) |
+
+## Integration Pattern: Service Layer
+
+We recommend encapsulating database logic within services and registering them in the DI container.
+
+### Step 1: Define the Service
+```typescript
+// users.service.ts
+import { PrismaClient } from '@prisma/client';
+
+export class UserService {
+  constructor(private prisma: PrismaClient) {}
+
+  async findActive() {
+    return this.prisma.user.findMany({ where: { active: true } });
+  }
+}
+```
+
+### Step 2: Register in Container
+```typescript
+// app.ts
+import { createApp, prismaPlugin } from 'swiftjs-core';
+import { PrismaClient } from '@prisma/client';
+
+const app = createApp();
+const prisma = new PrismaClient();
+
+app.register(prismaPlugin({ client: prisma }));
+
+// Registering custom services that use Prisma
+app.container.register('users', (c) => new UserService(prisma));
+```
+
+### Step 3: Use in Controller
+```typescript
+import { getPrisma } from 'swiftjs-core';
+
+app.get('/users/active', async (ctx) => {
+  const db = getPrisma(ctx);
+  return await db.user.findMany({ where: { active: true } });
+});
+```
+
+## Transactions
+
+SwiftJS provides a `withPrismaTransaction` helper for scoped database transactions.
+
+```typescript
+import { withPrismaTransaction } from 'swiftjs-core';
+
+app.post('/transfer', async (ctx) => {
+  await withPrismaTransaction(ctx, async (tx) => {
+    await tx.account.update({ /* ... */ });
+    await tx.account.update({ /* ... */ });
+  });
+});
+```
+
+## Best Practices
+
+1. **Connection Pooling**: Always configure connection limits appropriately for your production environment.
+2. **Lazy Connection**: Only connect to the database when the server starts and ensure graceful disconnection during [Shutdown](../core/architecture.mdx).
+3. **Repository Pattern**: For large projects, use the Repository pattern to decouple your business logic from the specific database implementation.

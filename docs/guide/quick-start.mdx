@@ -1,0 +1,70 @@
+# Quick Start
+
+Create your first high-performance API in minutes. SwiftJS makes it easy to go from a blank file to a production-ready endpoint.
+
+## Minimal Working App
+
+Create a file named `app.ts` and add the following code:
+
+```typescript
+import { createApp } from 'swiftjs-core';
+
+const app = createApp();
+
+app.get('/hello', (ctx) => {
+  return "Hello World!";
+});
+
+app.listen(3000);
+```
+
+## Running the Application
+
+### Using Bun (Fastest)
+```bash
+bun app.ts
+```
+
+### Using Node.js
+We recommend using `tsx` for direct TypeScript execution during development.
+
+```bash
+npx tsx app.ts
+```
+
+## Your First API Endpoint
+
+Let's refine the endpoint to handle JSON and request parameters.
+
+```typescript
+import { createApp } from 'swiftjs-core';
+import { z } from 'zod';
+
+const app = createApp();
+
+// Parameterized route with typed response
+app.get('/users/:id', (ctx) => {
+  const { id } = ctx.params;
+  
+  ctx.json({
+    id,
+    name: "John Doe",
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.listen(3000);
+```
+
+## Production Readiness
+
+SwiftJS isn't just for "Hello World". For production, you should use our **CLI** to scaffold a structured project:
+
+```bash
+npx create-swiftjs-app my-api
+```
+
+### What's Next?
+- Learn about the [Project Structure](project-structure)
+- Explore the [Routing System](../core/routing)
+- Deep dive into [Architecture](../core/architecture)

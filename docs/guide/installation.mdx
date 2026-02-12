@@ -1,0 +1,49 @@
+# Installation & Requirements
+
+Getting started with SwiftJS is simple. The framework is designed to work across major runtimes with minimal configuration.
+
+## System Requirements
+
+- **Node.js**: v18.0.0 or higher
+- **Bun**: v1.0.0 or higher (Recommended for peak performance)
+- **TypeScript**: v5.0 or higher
+- **OS**: Linux, macOS, or Windows
+
+## Package Manager Installation
+
+You can install SwiftJS using your preferred package manager. We recommend `bun` for the best development experience.
+
+```bash
+# Using Bun (Recommended)
+bun add swiftjs-core zod
+
+# Using NPM
+npm install swiftjs-core zod
+
+# Using PNPM
+pnpm add swiftjs-core zod
+```
+
+> [!NOTE]
+> `zod` is a peer dependency of SwiftJS as it powers the internal validation and type inference engines.
+
+## Runtime Compatibility
+
+SwiftJS uses a **Runtime Detection Utility** to automatically select the most optimized adapter for your environment.
+
+| Feature | Node.js | Bun | Edge (Workers/Vercel) |
+| :--- | :---: | :---: | :---: |
+| HTTP Server | ✅ | ✅ | ✅ |
+| WebSocket | ✅ | ✅ | 🚧 (Experimental) |
+| SSE | ✅ | ✅ | ✅ |
+| High-Res Time | ✅ | ✅ (Fast) | ✅ |
+
+## Versioning Policy
+
+SwiftJS follows **Semantic Versioning (SemVer)**.
+- **Major**: Breaking changes and architectural shifts.
+- **Minor**: New features and non-breaking improvements.
+- **Patch**: Bug fixes and security updates.
+
+## Next Steps
+Once installed, jump into the [Quick Start](quick-start.mdx) to build your first API.

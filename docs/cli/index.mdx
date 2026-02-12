@@ -1,0 +1,62 @@
+# CLI Tools
+
+The SwiftJS CLI (`create-swiftjs-app`) is the recommended way to bootstrap and manage your applications. It comes pre-configured with industry best practices and a modern developer experience.
+
+## Installation
+
+You don't need to install the CLI globally. Use `npx` or `bunx` to run it directly.
+
+```bash
+# Using Bun (Recommended)
+bunx create-swiftjs-app my-project
+
+# Using NPM
+npx create-swiftjs-app my-project
+```
+
+## Core Commands
+
+### `create`
+Scaffolds a new project with your choice of features.
+
+```bash
+npx create-swiftjs-app my-api --template basic
+```
+**Options:**
+- `--template`: Choose from `basic` (minimal), `standard` (recommended), or `enterprise` (modular).
+- `--git`: Initialize a git repository (default: true).
+- `--install`: Automatically run `npm install` (default: true).
+
+### `generate` (planned)
+Generate boilerplate for common framework components.
+
+```bash
+npx swiftjs generate controller User
+npx swiftjs generate service Auth
+```
+
+## Scaffolding Features
+
+When running the interactive CLI, you can choose from the following features:
+- **TypeScript**: First-class support with pre-configured `tsconfig`.
+- **Docker**: Automatic `Dockerfile` and `docker-compose.yml` generation.
+- **Linting**: Pre-configured ESLint and Prettier.
+- **CI**: GitHub Actions workflow files.
+- **Documentation**: Automatic Swagger/OpenAPI setup.
+
+## Project Templates
+
+### Basic
+A single-file entry point with minimal dependencies. Perfect for microservices or prototypes.
+
+### Standard
+Includes a structured folder layout (`controllers`, `services`, `middlewares`), environment variable handling, and unit testing setup.
+
+### Enterprise
+A domain-driven design (DDD) structure for large, complex applications requiring strict separation of concerns and modularity.
+
+## Customizing Templates
+You can host your own templates on GitHub and use them with the CLI:
+```bash
+npx create-swiftjs-app my-app --source github.com/username/template
+```

@@ -1,0 +1,80 @@
+# Request & Response Handling
+
+SwiftJS provides a powerful and intuitive abstraction over raw Node.js/Bun request and response objects through the `HttpContext`.
+
+## Request Handling
+
+Access request data easily via `ctx.req`. Common properties are normalized across runtimes.
+
+### Query Parameters
+```typescript
+app.get('/search', (ctx) => {
+  const query = ctx.query.q; // /search?q=swiftjs
+  return `Searching for: ${query}`;
+});
+```
+
+### Body Parsing
+SwiftJS automatically parses bodies for common content types (`application/json`, `application/x-www-form-urlencoded`, `text/plain`).
+
+```typescript
+app.post('/submit', async (ctx) => {
+  const data = ctx.body; // Automatically parsed JSON object
+  return ctx.json({ received: data });
+});
+```
+
+### Headers & Cookies
+```typescript
+app.get('/headers', (ctx) => {
+  const auth = ctx.headers['authorization'];
+  const session = ctx.cookies.get('sessionId');
+  
+  return { auth, session };
+});
+```
+
+## Response Handling
+
+Returning data is as simple as returning a value from the handler, but the `ctx` object offers fine-grained control.
+
+### Sending JSON
+```typescript
+app.get('/api', (ctx) => {
+  ctx.json({ status: 'ok' });
+});
+```
+
+### Status Codes
+```typescript
+app.get('/protected', (ctx) => {
+  if (!authorized) {
+    ctx.status(401).text('Unauthorized');
+    return;
+  }
+  return 'Secret Data';
+});
+```
+
+### Setting Headers & Cookies
+```typescript
+app.get('/set-data', (ctx) => {
+  ctx.res.setHeader('X-Custom-Header', 'SwiftJS');
+  ctx.cookies.set('preference', 'dark-mode', { maxAge: 3600, httpOnly: true });
+  
+  return 'Context updated';
+});
+```
+
+### Redirects
+```typescript
+app.get('/old-path', (ctx) => {
+  return ctx.redirect('/new-path', 301);
+});
+```
+
+## Context Pooling (Deep Dive)
+To achieve extreme performance, SwiftJS uses a **Context Pool**. 
+- Objects are reused across requests.
+- This results in significantly lower **Garbage Collection (GC) pauses**.
+- **Important**: Do not store request-specific data in global variables or static class members; always use `ctx` to ensure thread-safety and pool isolation.

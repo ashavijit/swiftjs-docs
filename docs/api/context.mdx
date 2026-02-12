@@ -1,0 +1,110 @@
+# Context
+
+The `Context` object (often abbreviated as `ctx`) is passed to every route handler and middleware. It encapsulates the incoming request, the response, and provides numerous utilities.
+
+## Interface
+
+The `Context` interface is defined as:
+
+```typescript
+export interface Context {
+  // Request & Response
+  req: SwiftRequest;
+  res: SwiftResponse;
+
+  // Data
+  params: Record<string, string>;
+  query: Record<string, string | string[]>;
+  body: unknown;
+  headers: Record<string, string | string[] | undefined>;
+  ip: string;
+
+  // Utilities
+  status(code: number): Context;
+  json(data: unknown): void;
+  text(data: string): void;
+  html(data: string): void;
+  redirect(url: string, status?: number): void;
+  blob(data: Buffer | Uint8Array, contentType?: string): void;
+  download(data: Buffer, filename: string, contentType?: string): void;
+
+  // Services
+  logger: Logger;
+  cache: CacheAdapter;
+  config: SwiftConfig;
+  cookies: CookieManager;
+  state: Map<string, unknown>;
+
+  // Optional (added by plugins/middleware)
+  files?: UploadedFile[];
+  session?: Session;
+  user?: any;
+}
+```
+
+## Response Methods
+
+### JSON Response
+
+```typescript
+app.get('/api', ctx => {
+  return { message: 'Hello' }; // Auto-JSON
+  // OR
+  ctx.json({ message: 'Hello' });
+});
+```
+
+### Text Response
+
+```typescript
+app.get('/text', ctx => {
+  ctx.text('Hello World');
+});
+```
+
+### Redirect
+
+```typescript
+app.get('/old', ctx => {
+  ctx.redirect('/new', 301);
+});
+```
+
+### File Download
+
+```typescript
+app.get('/download', ctx => {
+  const buff = Buffer.from('content');
+  ctx.download(buff, 'file.txt');
+});
+```
+
+## Cookies
+
+The `ctx.cookies` manager handles signing and serialization automatically.
+
+```typescript
+// Set a signed cookie
+ctx.cookies.setSigned('token', 'value', { httpOnly: true });
+
+// Get a signed cookie
+const token = await ctx.cookies.getSigned('token');
+```
+
+## State
+
+Use `ctx.state` to pass data between middleware and handlers.
+
+```typescript
+// Middleware
+app.use(async (ctx, next) => {
+  ctx.state.set('requestId', '123');
+  await next();
+});
+
+// Handler
+app.get('/', ctx => {
+  const id = ctx.state.get('requestId');
+  return { id };
+});
+```

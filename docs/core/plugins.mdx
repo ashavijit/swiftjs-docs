@@ -1,0 +1,93 @@
+# Plugin & Extension System
+
+SwiftJS is designed to be highly extensible. Plugins allow you to bundle and share functionality across multiple applications.
+
+## Plugin Architecture
+
+A SwiftJS plugin is an object with a `name` and a `register` function that interacts with the `PluginContext`.
+
+### Pattern 1: Global Extensions
+These plugins add global middleware or register services in the DI container.
+
+```typescript
+import { Plugin } from 'swiftjs-core';
+
+export const myCustomPlugin = (options: any): Plugin => ({
+  name: 'my-custom-plugin',
+  register: (ctx) => {
+    // Register global middleware
+    ctx.use(async (ctx, next) => {
+      ctx.res.setHeader('X-Plugin-Active', 'true');
+      await next();
+    });
+
+    // Register constants or services in the DI container
+    ctx.container.register('config', () => options.config);
+  }
+});
+
+// Usage
+app.register(myCustomPlugin({ config: { key: 'val' } }));
+```
+
+### Pattern 2: Context Decorations
+Decorations allow you to add custom properties or methods to the `ctx` object, available in every controller.
+
+```typescript
+// Registering a decoration
+app.register({
+  name: 'db-decoration',
+  register: (ctx) => {
+    ctx.decorate('db', new DatabaseClient());
+  }
+});
+
+// Usage in controller
+app.get('/data', (ctx) => {
+  const data = ctx.db.findMany(); 
+  return data;
+});
+```
+
+## Creating a Reusable Plugin
+
+A production-ready plugin should encapsulate its own logic, types, and configurations.
+
+```typescript
+// auth-plugin.ts
+import { Plugin, Context } from 'swiftjs-core';
+
+export interface AuthOptions {
+  secret: string;
+}
+
+export const authPlugin = (options: AuthOptions): Plugin => ({
+  name: 'auth',
+  register: (ctx) => {
+    // 1. Add context helper
+    ctx.decorate('user', (requestCtx: Context) => {
+      const token = requestCtx.headers['authorization'];
+      return verifyToken(token, options.secret);
+    });
+
+    // 2. Add lifecycle hook
+    ctx.addHook('onRequest', async (requestCtx) => {
+       requestCtx.logger.info(`Auth check for ${requestCtx.req.url}`);
+    });
+  }
+});
+```
+
+## Best Practices
+
+1. **Lazy Initialization**: Use `ctx.decorate()` with factory functions to ensure heavy clients (like DB or S3) are only created when actually used.
+2. **Namespace Decorations**: To avoid collisions, consider grouping your plugin's functionality under a single key (e.g., `ctx.myPlugin.method()`).
+3. **Type Augmentation**: Always provide TypeScript definitions for your decorations so users get full IDE support.
+
+```typescript
+declare module 'swiftjs-core' {
+  interface Context {
+    myPlugin: MyPluginInstance;
+  }
+}
+```

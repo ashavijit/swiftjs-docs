@@ -1,0 +1,78 @@
+# Configuration & Environment
+
+SwiftJS provides a robust system for managing application configuration across different environments (Development, Staging, Production).
+
+## Environment Variables
+
+The framework automatically loads `.env` files using its internal `loadEnv` utility (powered by `dotenv` and `dotenv-expand`).
+
+```typescript
+import { createApp, loadEnv } from 'swiftjs-core';
+
+loadEnv(); // Loads .env into process.env
+
+const app = createApp({
+  port: Number(process.env.PORT) || 3000,
+  trustProxy: process.env.TRUST_PROXY === 'true'
+});
+```
+
+## Centralized Config Pattern
+
+We recommend creating a `src/config/index.ts` file to centralize and validate your configuration.
+
+```typescript
+import { z } from 'zod';
+
+const ConfigSchema = z.object({
+  port: z.string().transform(Number).default('3000'),
+  dbUrl: z.string().url(),
+  env: z.enum(['development', 'production', 'test']).default('development')
+});
+
+export const config = ConfigSchema.parse({
+  port: process.env.PORT,
+  dbUrl: process.env.DATABASE_URL,
+  env: process.env.NODE_ENV
+});
+```
+
+## Using Config via Dependency Injection
+
+The best way to access config throughout your app is to register it in the DI container.
+
+```typescript
+app.container.register('config', () => config, { scope: 'singleton' });
+
+// Usage in a service
+class S3Service {
+  constructor(private config: typeof config) {
+    this.client = new S3(config.s3Options);
+  }
+}
+```
+
+## Framework Settings
+
+The `Swift` constructor accepts a variety of settings to fine-tune the framework's behavior.
+
+| Key | Description | Default |
+| :--- | :--- | :--- |
+| `port` | Server port | `3000` |
+| `trustProxy` | Trust `X-Forwarded-*` headers | `false` |
+| `logger` | Custom logger instance | `DefaultLogger` |
+| `bodyLimit` | Maximum request body size | `1mb` |
+| `caseSensitive` | Routing case sensitivity | `false` |
+
+## Secrets Management
+
+For sensitive production secrets, we recommend:
+1. **GitHub Secrets**: For CI/CD injection.
+2. **AWS Secrets Manager / HashiCorp Vault**: For enterprise-grade secret rotation.
+3. **SOPS**: For encrypted `.env` files committed to Git.
+
+## Best Practices
+
+1. **Validate at Start**: Use Zod to validate your config immediately. It's better for the app to fail at boot than to crash later due to a missing API key.
+2. **Immutability**: Treat your config as immutable. Do not modify the `config` object after the application has started.
+3. **Avoid `process.env` in Logic**: Only access `process.env` in your central config file. Everywhere else, use the validated `config` object or DI.

@@ -1,0 +1,188 @@
+# Tutorial: Building a REST API
+
+This guide walks you through building a production-ready REST API with SwiftJS using file-based routing, validation, and error handling.
+
+## 1. Project Setup
+
+First, create a new project:
+
+```bash
+npx create-swiftjs-app my-api
+cd my-api (select "File Router" template)
+npm install
+```
+
+## 2. Create the Data Model
+
+For this example, we'll build a simple "Todo" API. Let's define our TypeScript interface in `src/models/todo.ts`.
+
+```typescript
+// src/models/todo.ts
+export interface Todo {
+  id: number;
+  title: string;
+  completed: boolean;
+}
+
+// In-memory store (replace with DB for production)
+export const todos: Todo[] = [];
+let nextId = 1;
+
+export const TodoModel = {
+  findAll: () => todos,
+  findById: (id: number) => todos.find(t => t.id === id),
+  create: (title: string) => {
+    const todo = { id: nextId++, title, completed: false };
+    todos.push(todo);
+    return todo;
+  },
+  update: (id: number, data: Partial<Todo>) => {
+    const todo = todos.find(t => t.id === id);
+    if (!todo) return null;
+    Object.assign(todo, data);
+    return todo;
+  },
+  delete: (id: number) => {
+    const idx = todos.findIndex(t => t.id === id);
+    if (idx === -1) return false;
+    todos.splice(idx, 1);
+    return true;
+  },
+};
+```
+
+## 3. Create Routes
+
+We'll create the CRUD endpoints in `src/routes/todos`.
+
+### List & Create
+
+Create `src/routes/todos/index.get.ts`:
+
+```typescript
+import type { Context } from 'swiftjs-core';
+import { TodoModel } from '../../models/todo';
+
+export default function handler(ctx: Context) {
+  return TodoModel.findAll();
+}
+```
+
+Create `src/routes/todos/index.post.ts`:
+
+```typescript
+import { Context, z } from 'swiftjs-core';
+import { TodoModel } from '../../models/todo';
+
+export const body = z.object({
+  title: z.string().min(1).max(100),
+});
+
+export default function handler(ctx: Context) {
+  const { title } = ctx.body;
+  const todo = TodoModel.create(title);
+
+  ctx.status(201);
+  return todo;
+}
+```
+
+### Get, Update, Delete
+
+Create `src/routes/todos/[id].get.ts`:
+
+```typescript
+import { Context, z, NotFoundError } from 'swiftjs-core';
+import { TodoModel } from '../../models/todo';
+
+export const params = z.object({
+  id: z.coerce.number(),
+});
+
+export default function handler(ctx: Context) {
+  const { id } = ctx.params;
+  const todo = TodoModel.findById(Number(id));
+
+  if (!todo) {
+    throw new NotFoundError('Todo not found');
+  }
+
+  return todo;
+}
+```
+
+Create `src/routes/todos/[id].patch.ts`:
+
+```typescript
+import { Context, z, NotFoundError } from 'swiftjs-core';
+import { TodoModel } from '../../models/todo';
+
+export const params = z.object({
+  id: z.coerce.number(),
+});
+
+export const body = z.object({
+  title: z.string().optional(),
+  completed: z.boolean().optional(),
+});
+
+export default function handler(ctx: Context) {
+  const { id } = ctx.params;
+  const todo = TodoModel.update(Number(id), ctx.body);
+
+  if (!todo) {
+    throw new NotFoundError('Todo not found');
+  }
+
+  return todo;
+}
+```
+
+Create `src/routes/todos/[id].delete.ts`:
+
+```typescript
+import { Context, z, NotFoundError } from 'swiftjs-core';
+import { TodoModel } from '../../models/todo';
+
+export const params = z.object({
+  id: z.coerce.number(),
+});
+
+export default function handler(ctx: Context) {
+  const { id } = ctx.params;
+  const success = TodoModel.delete(Number(id));
+
+  if (!success) {
+    throw new NotFoundError('Todo not found');
+  }
+
+  ctx.status(204);
+}
+```
+
+## 4. Test It
+
+Run the server:
+
+```bash
+npm run dev
+```
+
+Test endpoints:
+
+```bash
+# Create
+curl -X POST http://localhost:3000/todos -H "Content-Type: application/json" -d '{"title":"Learn SwiftJS"}'
+
+# List
+curl http://localhost:3000/todos
+
+# Get One
+curl http://localhost:3000/todos/1
+
+# Update
+curl -X PATCH http://localhost:3000/todos/1 -H "Content-Type: application/json" -d '{"completed":true}'
+
+# Delete
+curl -X DELETE http://localhost:3000/todos/1
+```

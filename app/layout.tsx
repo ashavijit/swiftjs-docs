@@ -10,6 +10,11 @@ const dmSans = DM_Sans({
   subsets: ["latin"],
 });
 
+const haskoy = localFont({
+  src: "../public/fonts/Haskoy.ttf",
+  variable: "--font-haskoy",
+});
+
 const domaine = localFont({
   src: "../public/fonts/DomaineDispNar-Regular.otf",
   variable: "--font-domaine",
@@ -28,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${dmSans.variable} ${domaine.variable} antialiased bg-white dark:bg-black text-black dark:text-white font-sans`}
+        className={`${dmSans.variable} ${haskoy.variable} ${domaine.variable} antialiased bg-white dark:bg-black text-black dark:text-white font-sans`}
       >
         <ThemeProvider
           attribute="class"

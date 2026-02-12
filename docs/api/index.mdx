@@ -1,0 +1,69 @@
+# API Reference Format
+
+When documenting your specific API endpoints, SwiftJS recommends following a standardized template to ensure consistency across your team and integrations.
+
+## Endpoint Template
+
+### `[METHOD] /path/to/resource`
+
+Brief description of what the endpoint does.
+
+#### Request Headers
+| Name | Type | Requirement | Description |
+| :--- | :--- | :---: | :--- |
+| `Authorization` | String | Required | Bearer `<token>` |
+| `X-API-Version` | String | Optional | e.g. "1.0.0" |
+
+#### Path Parameters
+| Parameter | Type | Description |
+| :--- | :--- | :--- |
+| `id` | Number | The unique identifier of the resource. |
+
+#### Body Schema (JSON)
+```typescript
+{
+  "name": string, // The name of the new user
+  "email": string, // Unique email address
+  "role": "admin" | "user" // Optional: defaults to "user"
+}
+```
+
+#### Response Example (201 Created)
+```typescript
+{
+  "success": true,
+  "data": {
+    "id": 101,
+    "name": "Jane Austen",
+    "created_at": "..."
+  }
+}
+```
+
+#### Error States
+| Status | Message | Reason |
+| :--- | :--- | :--- |
+| 400 | "Invalid Body" | Body failed Zod validation |
+| 401 | "Unauthorized" | Missing or invalid auth token |
+| 409 | "Conflict" | Email already exists |
+
+---
+
+## Automated Documentation
+
+Instead of maintaining manuals by hand, we recommend using the `@swiftjs/plugin-swagger` to generate live documentation from your code and schemas.
+
+```typescript
+import { swaggerPlugin } from 'swiftjs-core';
+
+app.register(swaggerPlugin({
+  title: 'My Project API',
+  version: '1.0.0',
+  path: '/docs' // Interactive docs available at /docs
+}));
+```
+
+### Benefits of Automation
+- **Always Current**: Your documentation updates every time you restart your server.
+- **Interactive**: Developers can test endpoints directly from the browser.
+- **Standardized**: Outputs standard OpenAPI 3.0 specs for postman/insomnia.

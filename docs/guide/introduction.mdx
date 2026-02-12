@@ -1,0 +1,32 @@
+# Introduction
+
+SwiftJS is a high-performance, production-grade API framework designed for the modern JavaScript ecosystem. It provides a modular, type-safe architecture that runs seamlessly on both **Node.js** and **Bun**.
+
+## The Problem
+Developing scalable backends often requires choosing between performance (Go, Rust) and developer velocity (Node.js/TypeScript). Most Node.js frameworks either suffer from high GC pressure and overhead or lack the structured architectural patterns required for enterprise-grade applications.
+
+SwiftJS bridges this gap by offering:
+- **Radix-based Routing**: A zero-allocation path matching engine.
+- **Unified Runtime Adapter**: Write once, run on Node.js, Bun, or Edge runtimes.
+- **Enterprise Patterns**: Built-in Dependency Injection, request-scoped contexts, and lifecycle hooks.
+
+## Key Features
+
+- **🚀 Ultra-High Performance**: RADIX router with stack-based traversal for ~25k req/s.
+- **🥯 Bun-First**: Native support for Bun primitives while maintaining full Node.js compatibility.
+- **🛡️ Type-Safe by Design**: Deep integration with Zod for runtime validation and TypeScript for static safety.
+- **🏗️ Modular Architecture**: Highly extensible plugin system and DI container.
+- **📦 Production-Ready**: Built-in rate limiting, security headers, context pooling, and logging.
+
+## Comparison
+
+| Feature | SwiftJS | Express | Fastify |
+| :--- | :--- | :--- | :--- |
+| **Routing** | Radix (Zero-Alloc) | Regex | Radix |
+| **Middlewares** | Iterative (Fast) | Recursive (Slow) | Iterative |
+| **DI Container** | Native / Native Scopes | None / Manual | Manual |
+| **Bun Support** | Native Adapter | Compatibility Layer | Partial |
+| **Type Safety** | Zod Integrated | Manual | Schema-based |
+
+## Core Philosophy
+SwiftJS follows the principle of **"Performance at the Core, Simplicity in your Hands."** It hides the complexity of multi-runtime optimizations while exposing a clean, expressive API for developers.

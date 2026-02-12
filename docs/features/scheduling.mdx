@@ -1,0 +1,78 @@
+# Task Scheduling
+
+SwiftJS includes a powerful job scheduler via `jobsPlugin`. It supports Cron expressions, intervals, and specific dates, similar to libraries like Agenda or node-schedule but integrated directly into the framework lifecycle.
+
+## Features
+
+- **Cron Scheduling**: Standard crontab syntax.
+- **Intervals**: Human-readable intervals ('5m', '1h').
+- **Persistence**: Memory (default) or Redis storage.
+- **Lifecycle Management**: Auto-starts/stops with the app.
+
+## Installation
+
+The jobs feature is part of the core package.
+
+## Usage
+
+Register the plugin to access `app.scheduler`.
+
+```typescript
+import { createApp, jobsPlugin } from 'swiftjs-core';
+
+const app = createApp();
+
+app.register(
+  jobsPlugin({
+    // Optional: Use Redis for persistence across restarts
+    // store: new RedisJobStore({ url: 'redis://localhost:6379' }),
+    autoStart: true,
+  })
+);
+
+// Define jobs
+app.scheduler.addJob({
+  name: 'cleanup-cache',
+  schedule: { interval: '10m' }, // Runs every 10 minutes
+  handler: async () => {
+    console.log('Cleaning up cache...');
+  },
+});
+
+app.scheduler.addJob({
+  name: 'daily-report',
+  schedule: { cron: '0 0 * * *' }, // Runs daily at midnight
+  handler: async () => {
+    console.log('Generating daily report...');
+  },
+});
+```
+
+## Job Options
+
+```typescript
+interface JobDefinition {
+  name: string;
+  schedule:
+    | { cron: string }
+    | { interval: string } // e.g., '30s', '5m', '2h', '1d'
+    | { date: Date };
+  handler: () => Promise<void> | void;
+  data?: any; // Custom data passed to handler (if supported)
+  retries?: number;
+}
+```
+
+## Stores
+
+By default, jobs are stored in memory (`MemoryJobStore`). For production, particularly if you need to persist job status or coordinate between multiple instances, use `RedisJobStore`.
+
+```typescript
+import { RedisJobStore } from 'swiftjs-core';
+
+app.register(
+  jobsPlugin({
+    store: new RedisJobStore({ url: process.env.REDIS_URL }),
+  })
+);
+```

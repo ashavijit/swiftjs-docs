@@ -1,0 +1,471 @@
+﻿---
+title: Complete Reference
+description: Comprehensive SwiftJS documentation covering all features
+---
+
+# Complete Reference
+
+This document provides a comprehensive overview of all SwiftJS features.
+
+## Table of Contents
+
+1. [Core Concepts](#core-concepts)
+2. [Runtime Support](#runtime-support)
+3. [Routing](#routing)
+4. [Validation](#validation)
+5. [Middleware](#middleware)
+6. [Plugins](#plugins)
+7. [Observability](#observability)
+8. [Real-time Communication](#real-time-communication)
+9. [File Uploads](#file-uploads)
+10. [Session Management](#session-management)
+11. [Caching](#caching)
+12. [Dependency Injection](#dependency-injection)
+13. [Error Handling](#error-handling)
+14. [Security](#security)
+15. [Testing](#testing)
+
+---
+
+## Core Concepts
+
+### Application
+
+```typescript
+import { createApp } from 'swiftjs-core';
+
+const app = createApp({
+  port: 3000,
+  host: '0.0.0.0',
+  env: 'development',
+  routesDir: './routes',
+  logLevel: 'info',
+  runtime: 'auto',
+  bodyLimit: 1024 * 1024,
+  trustProxy: false,
+});
+
+app.listen();
+```
+
+### Context
+
+Every request handler receives a `Context` object:
+
+```typescript
+interface Context {
+  // Request
+  req: IncomingMessage;
+  res: ServerResponse;
+  params: Record<string, string>;
+  query: Record<string, string | string[]>;
+  body: unknown;
+  headers: Record<string, string | string[]>;
+  ip: string;
+  cookies: CookieManager;
+  files?: UploadedFile[];
+  session?: Session;
+
+  // Services
+  logger: Logger;
+  cache: CacheAdapter;
+  container: Container;
+  config: SwiftConfig;
+  state: Map<string, unknown>;
+
+  // Response
+  status(code: number): Context;
+  json(data: unknown): void;
+  text(data: string): void;
+  html(data: string): void;
+  redirect(url: string, status?: number): void;
+}
+```
+
+---
+
+## Runtime Support
+
+SwiftJS runs on both Node.js and Bun:
+
+```typescript
+import { RUNTIME, isBun, isNode, detectRuntime, getRuntimeInfo } from 'swiftjs-core';
+
+// Auto-detect
+const app = createApp({ runtime: 'auto' });
+
+// Force specific runtime
+const app = createApp({ runtime: 'node' });
+const app = createApp({ runtime: 'bun' });
+
+// Check runtime
+if (isBun) {
+  console.log('Running on Bun');
+}
+
+// Runtime info
+const info = getRuntimeInfo();
+// { runtime: 'node', version: 'v20.11.1', platform: 'linux' }
+```
+
+---
+
+## Routing
+
+### File-Based Routing
+
+```
+routes/
+â”œâ”€â”€ index.get.ts         â†’ GET /
+â”œâ”€â”€ users.post.ts        â†’ POST /users
+â”œâ”€â”€ users/[id].get.ts    â†’ GET /users/:id
+```
+
+### Programmatic Routing
+
+```typescript
+app.get('/users', handler);
+app.post('/users', handler);
+app.put('/users/:id', handler);
+app.delete('/users/:id', handler);
+
+app.group('/api/v1', group => {
+  group.get('/users', handler);
+  group.post('/users', handler);
+});
+```
+
+---
+
+## Validation
+
+Using Zod for type-safe validation:
+
+```typescript
+import { z } from 'swiftjs-core';
+
+export const body = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  age: z.number().optional(),
+});
+
+export const query = z.object({
+  page: z.coerce.number().default(1),
+  limit: z.coerce.number().default(20),
+});
+
+export const params = z.object({
+  id: z.string().uuid(),
+});
+```
+
+---
+
+## Middleware
+
+```typescript
+import { type Middleware } from 'swiftjs-core';
+
+const authMiddleware: Middleware = async (ctx, next) => {
+  const token = ctx.headers.authorization;
+  if (!token) {
+    ctx.status(401);
+    return ctx.json({ error: 'Unauthorized' });
+  }
+  await next();
+};
+
+app.use(authMiddleware);
+```
+
+### Lifecycle Hooks
+
+```typescript
+app.addHook('onStart', () => {});
+app.addHook('onRequest', ctx => {});
+app.addHook('preHandler', ctx => {});
+app.addHook('postHandler', ctx => {});
+app.addHook('onError', (ctx, error) => {});
+app.addHook('onClose', () => {});
+```
+
+---
+
+## Plugins
+
+### Built-in Plugins
+
+```typescript
+import { swaggerPlugin, scalarPlugin, redocPlugin, observabilityPlugin } from 'swiftjs-core';
+
+// Swagger UI
+app.register(
+  swaggerPlugin({
+    title: 'My API',
+    version: '1.0.0',
+  })
+);
+
+// Observability
+app.register(
+  observabilityPlugin({
+    serviceName: 'my-api',
+    enableMetrics: true,
+    enableTracing: true,
+    enableHealth: true,
+  })
+);
+```
+
+### Creating Plugins
+
+```typescript
+import { definePlugin } from 'swiftjs-core';
+
+export const myPlugin = definePlugin({
+  name: 'my-plugin',
+  register(ctx) {
+    ctx.route('GET', '/plugin', () => ({ from: 'plugin' }));
+    ctx.use(myMiddleware);
+    ctx.addHook('onStart', () => ctx.logger.info('Plugin loaded'));
+  },
+});
+```
+
+---
+
+## Observability
+
+### Health Checks
+
+```typescript
+import { observabilityPlugin, registerHealthCheck, healthChecks } from 'swiftjs-core';
+
+app.register(observabilityPlugin({ enableHealth: true }));
+
+registerHealthCheck(
+  'database',
+  healthChecks.database('db', async () => {
+    await db.query('SELECT 1');
+  })
+);
+
+// Endpoints:
+// GET /health        - Full status
+// GET /health/live   - Liveness
+// GET /health/ready  - Readiness
+```
+
+### Metrics
+
+```typescript
+import { getMetricsRegistry } from 'swiftjs-core';
+
+const registry = getMetricsRegistry();
+const counter = registry.registerCounter('requests', 'Total requests', ['method']);
+counter.inc({ method: 'GET' });
+
+// GET /metrics - Prometheus format
+```
+
+### Tracing
+
+```typescript
+import { getSpan, startSpan } from 'swiftjs-core';
+
+export default function handler(ctx: Context) {
+  const span = startSpan('db.query', ctx);
+  await db.query(...);
+  span.end();
+}
+```
+
+---
+
+## Real-time Communication
+
+### WebSocket
+
+```typescript
+app.ws('/chat', {
+  onOpen(client) {
+    client.send('Connected');
+  },
+  onMessage(client, message) {
+    client.send(`Echo: ${message}`);
+  },
+  onClose(client) {
+    console.log('Disconnected');
+  },
+});
+```
+
+### Server-Sent Events
+
+```typescript
+app.sse('/events', ctx => {
+  setInterval(() => {
+    ctx.client.send({ event: 'update', data: JSON.stringify({ time: Date.now() }) });
+  }, 1000);
+});
+```
+
+---
+
+## File Uploads
+
+```typescript
+import { uploadMiddleware, DiskStorage } from 'swiftjs-core';
+
+app.use(
+  uploadMiddleware({
+    storage: new DiskStorage({ directory: './uploads' }),
+    maxFileSize: 10 * 1024 * 1024,
+    allowedMimeTypes: ['image/jpeg', 'image/png'],
+  })
+);
+
+app.post('/upload', ctx => {
+  return { files: ctx.files };
+});
+```
+
+---
+
+## Session Management
+
+```typescript
+import { sessionMiddleware, MemorySessionStore } from 'swiftjs-core';
+
+app.use(
+  sessionMiddleware({
+    store: new MemorySessionStore(),
+    secret: 'your-secret',
+    cookie: { maxAge: 86400000 },
+  })
+);
+
+app.get('/login', ctx => {
+  ctx.session.set('userId', '123');
+});
+```
+
+---
+
+## Caching
+
+```typescript
+// Memory cache
+app.cache.set('key', 'value', 60); // TTL: 60 seconds
+const value = await app.cache.get('key');
+
+// Redis cache (configure in createApp)
+const app = createApp({
+  cache: {
+    driver: 'redis',
+    redis: { url: 'redis://localhost:6379' },
+  },
+});
+```
+
+---
+
+## Dependency Injection
+
+```typescript
+// Register services
+app.container.register('userService', new UserService());
+
+// In handlers
+export default function handler(ctx: Context) {
+  const userService = ctx.container.get<UserService>('userService');
+  return userService.getAll();
+}
+```
+
+---
+
+## Error Handling
+
+```typescript
+import { SwiftError, NotFoundError, ValidationError } from 'swiftjs-core';
+
+// Throw errors
+throw new SwiftError(400, 'Bad request');
+throw new NotFoundError('User not found');
+
+// Custom error pages
+app.setErrorPage(404, ctx => {
+  return { error: 'Not found', path: ctx.req.url };
+});
+
+// Error hook
+app.addHook('onError', (ctx, error) => {
+  ctx.logger.error('Error:', error);
+});
+```
+
+---
+
+## Security
+
+### Rate Limiting
+
+```typescript
+import { rateLimitPlugin } from 'swiftjs-ratelimit';
+
+app.register(
+  rateLimitPlugin({
+    max: 100,
+    window: 60,
+  })
+);
+```
+
+### CORS
+
+```typescript
+import { corsPlugin } from 'swiftjs-cors';
+
+app.register(
+  corsPlugin({
+    origin: ['https://example.com'],
+    credentials: true,
+  })
+);
+```
+
+### Helmet
+
+```typescript
+import { helmetPlugin } from 'swiftjs-helmet';
+
+app.register(helmetPlugin());
+```
+
+---
+
+## Testing
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { createApp } from 'swiftjs-core';
+
+describe('API', () => {
+  const app = createApp({ port: 0 });
+
+  app.get('/health', () => ({ status: 'ok' }));
+
+  it('returns health status', async () => {
+    // Use supertest or similar for HTTP testing
+  });
+});
+```
+
+Run tests:
+
+```bash
+npm test
+npm run test:coverage
+```

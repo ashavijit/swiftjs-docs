@@ -1,0 +1,94 @@
+# Logging & Monitoring
+
+Visibility is crucial for production applications. SwiftJS includes a structured logging system and integration points for observability platforms.
+
+## Internal Logger
+
+Broadcasting logs in SwiftJS is managed by the `Logger` service. By default, it outputs human-readable logs in development and JSON in production.
+
+```typescript
+app.get('/log-test', (ctx) => {
+  ctx.logger.info('User accessed log-test', { userId: 123 });
+  ctx.logger.error('Something went wrong', new Error('Fail'));
+  
+  return 'Check your console';
+});
+```
+
+## Logging Levels
+
+SwiftJS supports standard logging levels:
+- `debug`: Detailed information for developers.
+- `info`: General application flow (default).
+- `warn`: Potentially harmful situations.
+- `error`: Error events that might still allow the app to continue.
+
+```typescript
+// Changing log level
+app.setLogLevel('debug');
+```
+
+## External Loggers (Pino / Winston)
+
+You can easily swap the internal logger with a custom one (like Pino for ultra-fast JSON logging).
+
+```typescript
+import pino from 'pino';
+
+const logger = pino();
+const app = new Swift({
+  logger: {
+    info: (msg, meta) => logger.info(meta, msg),
+    error: (msg, err) => logger.error(err, msg),
+    // ... map other levels
+  }
+});
+```
+
+## Request Tracking (Tracing)
+
+Each request in SwiftJS can be assigned a `requestId`. Use the `requestIdMiddleware` or `devToolsPlugin` to enable this.
+
+```typescript
+import { createApp, devToolsPlugin } from 'swiftjs-core';
+
+const app = createApp();
+app.register(devToolsPlugin({ requestId: true }));
+
+app.use(async (ctx, next) => {
+   const rid = ctx.state.get('requestId'); // Access generated ID
+   ctx.logger.info(`Processing request ${rid}`);
+   await next();
+});
+```
+
+## Monitoring & Metrics
+
+### Health Checks
+Expose a health check endpoint for load balancers.
+
+```typescript
+app.get('/health', (ctx) => {
+  return ctx.json({
+    status: 'up',
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  });
+});
+```
+
+### Prometheus Integration
+Use the `@swiftjs/plugin-prometheus` to export metrics for Grafana dashboarding.
+
+```typescript
+import { prometheusPlugin } from '@swiftjs/plugin-prometheus';
+
+app.use(prometheusPlugin());
+// Metrics available at /metrics
+```
+
+## Best Practices
+
+1. **Don't use `console.log`**: Always use `ctx.logger` so logs are correctly structured and formatted for your current environment.
+2. **Contextualize Logs**: Include the `requestId` and `userId` in log metadata to make troubleshooting easier in ELK or Datadog.
+3. **Alert on Errors**: Connect your error logs to an alerting system (Sentry, OpsGenie) to get notified of production issues immediately.
