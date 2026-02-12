@@ -4,140 +4,294 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Github, Search, Command } from "lucide-react";
+import {
+  Menu,
+  X,
+  Github,
+  Search,
+  Command,
+} from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 import { docsConfig } from "@/lib/docs-config";
-
 import { CommandMenu } from "./command-menu";
 
 export function Navbar() {
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [commandMenuOpen, setCommandMenuOpen] = useState(false);
-    const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
 
-    useEffect(() => {
-        setMobileMenuOpen(false);
-    }, [pathname]);
+  const pathname = usePathname();
 
-    return (
-        <header className="sticky top-0 z-50 w-full border-b border-neutral-200/50 dark:border-neutral-800/50 bg-white/70 dark:bg-black/70 backdrop-blur-md supports-[backdrop-filter]:bg-white/40">
-            <CommandMenu open={commandMenuOpen} setOpen={setCommandMenuOpen} />
-            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-                {/* Left: Logo */}
-                <div className="flex items-center gap-10">
-                    <Link href="/" className="flex items-center gap-2.5 group transition-opacity hover:opacity-90">
-                        <div className="relative h-9 w-9 overflow-hidden rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 bg-white dark:bg-neutral-900 shadow-sm transition-transform group-hover:scale-105">
-                            <img
-                                src="/image.ico"
-                                alt="SwiftJS Logo"
-                                className="h-full w-full object-contain p-1.5"
-                            />
-                        </div>
-                        <span className="hidden font-serif text-xl font-medium tracking-tight sm:block text-neutral-900 dark:text-neutral-100">
-                            SwiftJS
-                        </span>
-                    </Link>
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
-                    {/* Desktop Navigation */}
-                    <nav className="hidden md:flex items-center gap-1.5">
-                        {docsConfig.mainNav.map((item) => {
-                            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-                            return (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    className={cn(
-                                        "relative px-4 py-2 text-sm font-medium transition-all duration-200",
-                                        isActive
-                                            ? "text-neutral-900 dark:text-neutral-100"
-                                            : "text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"
-                                    )}
-                                >
-                                    {isActive && (
-                                        <motion.div
-                                            layoutId="nav-pill"
-                                            className="absolute inset-x-0 bottom-0 h-0.5 bg-neutral-900 dark:bg-neutral-100"
-                                            transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                                        />
-                                    )}
-                                    {item.title}
-                                </Link>
-                            );
-                        })}
-                    </nav>
-                </div>
+  return (
+    <header className="sticky top-0 z-50 w-full group/nav">
+      {/* Floating Blur Shell */}
+      <div
+        className="
+          relative
+          mx-auto
+          max-w-7xl
+          px-4 sm:px-6 lg:px-8
+          pt-4
+        "
+      >
+        <CommandMenu open={commandOpen} setOpen={setCommandOpen} />
 
-                {/* Right: Actions */}
-                <div className="flex items-center gap-4">
-                    {/* Search Trigger */}
-                    <button
-                        onClick={() => setCommandMenuOpen(true)}
-                        className="hidden lg:flex items-center gap-3 px-4 py-2 text-sm text-neutral-500 border border-neutral-200/60 dark:border-neutral-800/60 rounded-xl bg-neutral-50/50 dark:bg-neutral-900/40 hover:bg-neutral-100/80 dark:hover:bg-neutral-900/60 transition-all group shadow-sm"
-                    >
-                        <Search className="h-4 w-4 transition-colors group-hover:text-neutral-900 dark:group-hover:text-neutral-100" />
-                        <span className="group-hover:text-neutral-900 dark:group-hover:text-neutral-100">Search guides...</span>
-                        <kbd className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-md shadow-sm opacity-60">
-                            <Command className="h-2.5 w-2.5" /> K
-                        </kbd>
-                    </button>
+        {/* Navbar Container */}
+        <div
+          className="
+            relative
+            flex h-14 items-center justify-between
+            rounded-2xl
+            border border-white/10 dark:border-white/5
+            bg-white/70 dark:bg-neutral-900/70
+            backdrop-blur-2xl
+            shadow-[0_8px_32px_-4px_rgba(0,0,0,0.1)]
+            dark:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.5)]
+          "
+        >
+          {/* Shimmer Top Line */}
+          <div
+            className="
+              absolute inset-x-8 top-0 h-px
+              bg-gradient-to-r
+              from-transparent via-neutral-300 dark:via-white/30 to-transparent
+              opacity-0 group-hover/nav:opacity-100 transition-opacity duration-1000
+            "
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white dark:via-white/50 to-transparent animate-shimmer" />
+          </div>
 
-                    <div className="flex items-center gap-1.5">
-                        <button
-                            onClick={() => setCommandMenuOpen(true)}
-                            className="lg:hidden p-2 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-900"
-                        >
-                            <Search className="h-5 w-5" />
-                        </button>
-                        <a
-                            href={docsConfig.links.github}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="p-2 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-900"
-                        >
-                            <Github className="h-5 w-5" />
-                        </a>
-                        <ThemeToggle />
+          {/* LEFT CONTENT */}
+          <div className="flex items-center gap-10 pl-5">
 
-                        {/* Mobile Toggle */}
-                        <button
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="md:hidden p-2 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-900"
-                        >
-                            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                        </button>
-                    </div>
-                </div>
+            {/* Logo & Brand */}
+            <Link
+              href="/"
+              className="
+                flex items-center gap-3
+                group/logo
+              "
+            >
+              <div
+                className="
+                  relative
+                  h-9 w-9
+                  rounded-xl
+                  border border-black/5 dark:border-white/10
+                  bg-white dark:bg-black
+                  shadow-sm
+                  transition-all duration-300
+                  group-hover/logo:scale-110
+                  group-hover/logo:shadow-indigo-500/20
+                "
+              >
+                <img
+                  src="/image.ico"
+                  alt="SwiftJS"
+                  className="h-full w-full object-contain p-2"
+                />
+
+                {/* Brand Aura */}
+                <div className="absolute -inset-1 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-xl blur-lg opacity-0 group-hover/logo:opacity-100 transition-opacity" />
+              </div>
+
+              <div className="flex flex-col leading-none">
+                <span className="font-serif text-lg font-bold tracking-tight text-neutral-900 dark:text-white">
+                  SwiftJS
+                </span>
+                <span className="text-[9px] font-bold text-neutral-400 dark:text-neutral-600 tracking-widest uppercase mt-0.5">
+                  v1.2.0
+                </span>
+              </div>
+            </Link>
+
+            {/* Desktop Nav Links */}
+            <nav className="hidden md:flex items-center gap-1">
+              {docsConfig.mainNav.map((item) => {
+                const active =
+                  pathname === item.href ||
+                  pathname.startsWith(item.href + "/");
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "relative px-4 py-2 text-sm font-semibold transition-colors duration-200",
+                      active
+                        ? "text-neutral-950 dark:text-white"
+                        : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200"
+                    )}
+                  >
+                    {active && (
+                      <motion.div
+                        layoutId="nav-active"
+                        className="
+                          absolute inset-0
+                          rounded-xl
+                          bg-neutral-100 dark:bg-white/10
+                          -z-10
+                        "
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 30,
+                        }}
+                      />
+                    )}
+                    {item.title}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* RIGHT CONTENT */}
+          <div className="flex items-center gap-3 pr-4">
+
+            {/* Premium Search Trigger */}
+            <button
+              onClick={() => setCommandOpen(true)}
+              className="
+                hidden lg:flex
+                items-center gap-4
+                px-4 py-2
+                rounded-xl
+                border border-black/5 dark:border-white/5
+                bg-neutral-50/50 dark:bg-white/5
+                text-sm text-neutral-500
+                hover:bg-white dark:hover:bg-white/10
+                hover:text-neutral-900 dark:hover:text-white
+                hover:shadow-sm
+                transition-all duration-300
+                group/search
+              "
+            >
+              <Search className="h-4 w-4 transition-transform group-hover/search:scale-110" />
+              <span className="font-medium">Search docs...</span>
+              <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-lg bg-white dark:bg-black border border-neutral-200 dark:border-neutral-800 text-[10px] font-bold text-neutral-400 dark:text-neutral-500 shadow-sm">
+                <Command className="h-2.5 w-2.5" />
+                <span>K</span>
+              </div>
+            </button>
+
+            {/* Action Icons */}
+            <div className="flex items-center gap-1">
+              <IconButton
+                onClick={() => setCommandOpen(true)}
+                className="lg:hidden"
+              >
+                <Search className="h-5 w-5" />
+              </IconButton>
+
+              <IconLink href={docsConfig.links.github}>
+                <Github className="h-5 w-5" />
+              </IconLink>
+
+              <ThemeToggle />
+
+              <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-800 mx-1 hidden sm:block" />
+
+              <IconButton
+                className="md:hidden ml-1"
+                onClick={() => setMobileOpen(!mobileOpen)}
+              >
+                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </IconButton>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Mobile Menu (Animated) */}
-            <AnimatePresence>
-                {mobileMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden overflow-hidden border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black"
-                    >
-                        <nav className="flex flex-col p-4 gap-2">
-                            {docsConfig.mainNav.map((item) => (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    className={cn(
-                                        "px-4 py-3 rounded-xl text-base font-medium transition-colors",
-                                        pathname.startsWith(item.href)
-                                            ? "bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white"
-                                            : "text-neutral-500"
-                                    )}
-                                >
-                                    {item.title}
-                                </Link>
-                            ))}
-                        </nav>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </header>
-    );
+      {/* Mobile Menu Refined */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            transition={{ duration: 0.2, ease: "circOut" }}
+            className="
+              md:hidden
+              mt-3 mx-4
+              rounded-[1.5rem]
+              border border-black/5 dark:border-white/10
+              bg-white/90 dark:bg-neutral-900/90
+              backdrop-blur-2xl
+              shadow-2xl
+              overflow-hidden
+              p-2
+            "
+          >
+            <nav className="flex flex-col gap-1">
+              {docsConfig.mainNav.map((item) => {
+                const active = pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center justify-between px-5 py-3.5 rounded-2xl text-[15px] font-semibold transition-all",
+                      active
+                        ? "bg-neutral-100 dark:bg-white/10 text-neutral-950 dark:text-white shadow-inner"
+                        : "text-neutral-500 hover:bg-neutral-50 dark:hover:bg-white/5"
+                    )}
+                  >
+                    {item.title}
+                    {active && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />}
+                  </Link>
+                );
+              })}
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
+  );
+}
+
+function IconButton({
+  children,
+  onClick,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "p-2 rounded-xl text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-white/10 transition-all duration-200 active:scale-90",
+        className
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function IconLink({
+  children,
+  href,
+}: {
+  children: React.ReactNode;
+  href: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="p-2 rounded-xl text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-white/10 transition-all duration-200 active:scale-90"
+    >
+      {children}
+    </a>
+  );
 }

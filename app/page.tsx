@@ -104,7 +104,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="font-serif text-6xl sm:text-8xl font-medium text-neutral-900 dark:text-white mb-10 tracking-tight leading-none"
+            className="font-serif text-6xl sm:text-8xl font-medium mb-10 tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-b from-neutral-900 via-neutral-600 to-black dark:from-white dark:via-neutral-400 dark:to-neutral-600"
           >
             Ready to Build <br />
             the Future?
@@ -120,61 +120,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      <footer className="py-20 px-6 border-t border-neutral-100 dark:border-neutral-900">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 lg:gap-8 mb-20">
-            <div className="col-span-2 lg:col-span-2">
-              <Link href="/" className="inline-flex items-center gap-2 mb-6">
-                <div className="w-8 h-8 rounded-lg bg-neutral-900 dark:bg-white flex items-center justify-center">
-                  <span className="text-white dark:text-black font-bold text-lg tracking-tighter italic">S</span>
-                </div>
-                <span className="text-xl font-bold tracking-tighter text-neutral-900 dark:text-white">SwiftJS</span>
-              </Link>
-              <p className="text-neutral-500 dark:text-neutral-400 max-w-xs leading-relaxed">
-                Building the next generation of high-performance API infrastructure for the modern web.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-sm uppercase tracking-widest text-neutral-900 dark:text-white mb-6">Product</h4>
-              <ul className="space-y-4 text-sm text-neutral-500 dark:text-neutral-400">
-                <li><Link href="/docs" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Documentation</Link></li>
-                <li><Link href="/showcase" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Showcase</Link></li>
-                <li><Link href="/pricing" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Pricing</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-sm uppercase tracking-widest text-neutral-900 dark:text-white mb-6">Community</h4>
-              <ul className="space-y-4 text-sm text-neutral-500 dark:text-neutral-400">
-                <li><Link href="https://github.com" className="hover:text-neutral-900 dark:hover:text-white transition-colors">GitHub</Link></li>
-                <li><Link href="https://discord.com" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Discord</Link></li>
-                <li><Link href="https://twitter.com" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Twitter</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-sm uppercase tracking-widest text-neutral-900 dark:text-white mb-6">Company</h4>
-              <ul className="space-y-4 text-sm text-neutral-500 dark:text-neutral-400">
-                <li><Link href="/about" className="hover:text-neutral-900 dark:hover:text-white transition-colors">About</Link></li>
-                <li><Link href="/blog" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Blog</Link></li>
-                <li><Link href="/privacy" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Privacy</Link></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-10 border-t border-neutral-100 dark:border-neutral-900 text-sm text-neutral-400">
-            <p>© {new Date().getFullYear()} SwiftJS Inc. All rights reserved.</p>
-            <div className="flex items-center gap-6">
-              <button className="hover:text-neutral-900 dark:hover:text-white transition-colors"><Twitter className="w-5 h-5" /></button>
-              <button className="hover:text-neutral-900 dark:hover:text-white transition-colors"><Github className="w-5 h-5" /></button>
-              <button className="hover:text-neutral-900 dark:hover:text-white transition-colors"><Linkedin className="w-5 h-5" /></button>
-              <button className="hover:text-neutral-900 dark:hover:text-white transition-colors"><Slack className="w-5 h-5" /></button>
-            </div>
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }

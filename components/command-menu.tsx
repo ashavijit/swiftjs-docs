@@ -7,34 +7,31 @@ import {
     Search,
     Book,
     FileText,
-    Code,
-    Settings,
     Laptop,
     Moon,
     Sun,
-    Layout
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { docsConfig } from "@/lib/docs-config";
-import { cn } from "@/lib/utils";
+
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { DialogTitle } from "@radix-ui/react-dialog";
 
 interface CommandMenuProps {
     open: boolean;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { DialogTitle } from "@radix-ui/react-dialog";
-
 export function CommandMenu({ open, setOpen }: CommandMenuProps) {
     const router = useRouter();
     const { setTheme } = useTheme();
 
+    /* Toggle Cmd + K */
     React.useEffect(() => {
         const down = (e: KeyboardEvent) => {
             if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
-                setOpen((open) => !open);
+                setOpen((o) => !o);
             }
         };
 
@@ -42,60 +39,139 @@ export function CommandMenu({ open, setOpen }: CommandMenuProps) {
         return () => document.removeEventListener("keydown", down);
     }, [setOpen]);
 
-    const runCommand = React.useCallback((command: () => unknown) => {
-        setOpen(false);
-        command();
-    }, [setOpen]);
+    const runCommand = React.useCallback(
+        (command: () => unknown) => {
+            setOpen(false);
+            command();
+        },
+        [setOpen]
+    );
 
     return (
         <Command.Dialog
             open={open}
             onOpenChange={setOpen}
             label="Global Command Menu"
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[500px] bg-white dark:bg-[#0a0a0a] rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-2xl p-0 z-[100]"
+            className="
+                fixed top-1/2 left-1/2
+                -translate-x-1/2 -translate-y-1/2
+                w-full max-w-xl
+                rounded-2xl
+                border border-white/10
+                bg-white/70 dark:bg-neutral-900/70
+                backdrop-blur-xl
+                shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)]
+                overflow-hidden
+                z-[100]
+                animate-in fade-in zoom-in-95
+            "
         >
             <VisuallyHidden>
                 <DialogTitle>Global Command Menu</DialogTitle>
             </VisuallyHidden>
-            <div className="flex items-center border-b border-neutral-200 dark:border-neutral-800 px-3">
-                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+
+            {/* Search Bar */}
+            <div
+                className="
+                    flex items-center gap-3
+                    border-b border-black/5 dark:border-white/10
+                    px-4 py-3
+                    bg-white/40 dark:bg-black/30
+                "
+            >
+                <Search className="h-4 w-4 text-neutral-500" />
+
                 <Command.Input
-                    className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-neutral-500 disabled:cursor-not-allowed disabled:opacity-50 dark:placeholder:text-neutral-400"
-                    placeholder="Type a command or search..."
+                    placeholder="Search commands..."
+                    className="
+                        w-full
+                        bg-transparent
+                        text-sm
+                        outline-none
+                        placeholder:text-neutral-500
+                        dark:placeholder:text-neutral-400
+                    "
                 />
             </div>
 
-            <Command.List className="max-h-[300px] overflow-y-auto overflow-x-hidden p-2">
-                <Command.Empty className="py-6 text-center text-sm">No results found.</Command.Empty>
+            {/* Results */}
+            <Command.List
+                className="
+                    max-h-[320px]
+                    overflow-y-auto
+                    px-2 py-3
+                    scrollbar-thin
+                "
+            >
+                <Command.Empty className="py-8 text-center text-sm text-neutral-500">
+                    No results found
+                </Command.Empty>
 
-                <Command.Group heading="Links" className="px-2 pb-1.5 text-xs text-neutral-500 font-medium">
-                    {docsConfig.mainNav.map((navItem) => (
+                {/* Links */}
+                <Command.Group
+                    heading="Links"
+                    className="px-2 text-xs text-neutral-500 font-medium"
+                >
+                    {docsConfig.mainNav.map((nav) => (
                         <Command.Item
-                            key={navItem.href}
-                            value={navItem.title}
-                            onSelect={() => runCommand(() => router.push(navItem.href))}
-                            className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 aria-selected:bg-neutral-100 dark:aria-selected:bg-neutral-800 group"
+                            key={nav.href}
+                            value={nav.title}
+                            onSelect={() =>
+                                runCommand(() => router.push(nav.href))
+                            }
+                            className="
+                                group
+                                flex items-center gap-3
+                                px-3 py-2
+                                rounded-lg
+                                text-sm
+                                cursor-pointer
+                                transition-all
+                                hover:bg-black/5 dark:hover:bg-white/10
+                                aria-selected:bg-black/10
+                                dark:aria-selected:bg-white/15
+                            "
                         >
-                            <FileText className="h-4 w-4 text-neutral-500 group-hover:text-black dark:group-hover:text-white group-aria-selected:text-black dark:group-aria-selected:text-white" />
-                            <span className="text-neutral-700 dark:text-neutral-300 group-hover:text-black dark:group-hover:text-white group-aria-selected:text-black dark:group-aria-selected:text-white">{navItem.title}</span>
+                            <FileText className="h-4 w-4 text-neutral-500" />
+                            <span>{nav.title}</span>
                         </Command.Item>
                     ))}
                 </Command.Group>
 
-                <Command.Group heading="Documentation" className="px-2 pb-1.5 text-xs text-neutral-500 font-medium mt-2">
+                {/* Docs */}
+                <Command.Group
+                    heading="Documentation"
+                    className="mt-3 px-2 text-xs text-neutral-500 font-medium"
+                >
                     {docsConfig.sidebar.map((group) => (
                         <div key={group.title}>
                             {group.items.map((item) => (
                                 <Command.Item
                                     key={item.href}
                                     value={item.title}
-                                    onSelect={() => runCommand(() => router.push(item.href))}
-                                    className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 aria-selected:bg-neutral-100 dark:aria-selected:bg-neutral-800 group"
+                                    onSelect={() =>
+                                        runCommand(() =>
+                                            router.push(item.href)
+                                        )
+                                    }
+                                    className="
+                                        group
+                                        flex items-center gap-3
+                                        px-3 py-2
+                                        rounded-lg
+                                        text-sm
+                                        cursor-pointer
+                                        transition-all
+                                        hover:bg-black/5 dark:hover:bg-white/10
+                                        aria-selected:bg-black/10
+                                        dark:aria-selected:bg-white/15
+                                    "
                                 >
-                                    <Book className="h-4 w-4 text-neutral-500 group-hover:text-black dark:group-hover:text-white group-aria-selected:text-black dark:group-aria-selected:text-white" />
-                                    <span className="text-neutral-700 dark:text-neutral-300 group-hover:text-black dark:group-hover:text-white group-aria-selected:text-black dark:group-aria-selected:text-white">{item.title}</span>
+                                    <Book className="h-4 w-4 text-neutral-500" />
 
-                                    <span className="ml-auto text-xs text-neutral-400 opacity-60 group-hover:opacity-100">
+                                    <span>{item.title}</span>
+
+                                    <span className="ml-auto text-xs text-neutral-400">
                                         {group.title}
                                     </span>
                                 </Command.Item>
@@ -104,41 +180,82 @@ export function CommandMenu({ open, setOpen }: CommandMenuProps) {
                     ))}
                 </Command.Group>
 
-                <Command.Separator className="my-1 h-px bg-neutral-200 dark:bg-neutral-800" />
+                <Command.Separator className="my-3 h-px bg-black/5 dark:bg-white/10" />
 
-                <Command.Group heading="Theme" className="px-2 pb-1.5 text-xs text-neutral-500 font-medium mt-2">
-                    <Command.Item
-                        value="light"
-                        onSelect={() => runCommand(() => setTheme("light"))}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 aria-selected:bg-neutral-100 dark:aria-selected:bg-neutral-800 group"
-                    >
-                        <Sun className="h-4 w-4 text-neutral-500 group-hover:text-black dark:group-hover:text-white group-aria-selected:text-black dark:group-aria-selected:text-white" />
-                        <span className="text-neutral-700 dark:text-neutral-300 group-hover:text-black dark:group-hover:text-white group-aria-selected:text-black dark:group-aria-selected:text-white">Light</span>
-                    </Command.Item>
-                    <Command.Item
-                        value="dark"
-                        onSelect={() => runCommand(() => setTheme("dark"))}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 aria-selected:bg-neutral-100 dark:aria-selected:bg-neutral-800 group"
-                    >
-                        <Moon className="h-4 w-4 text-neutral-500 group-hover:text-black dark:group-hover:text-white group-aria-selected:text-black dark:group-aria-selected:text-white" />
-                        <span className="text-neutral-700 dark:text-neutral-300 group-hover:text-black dark:group-hover:text-white group-aria-selected:text-black dark:group-aria-selected:text-white">Dark</span>
-                    </Command.Item>
-                    <Command.Item
-                        value="system"
-                        onSelect={() => runCommand(() => setTheme("system"))}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 aria-selected:bg-neutral-100 dark:aria-selected:bg-neutral-800 group"
-                    >
-                        <Laptop className="h-4 w-4 text-neutral-500 group-hover:text-black dark:group-hover:text-white group-aria-selected:text-black dark:group-aria-selected:text-white" />
-                        <span className="text-neutral-700 dark:text-neutral-300 group-hover:text-black dark:group-hover:text-white group-aria-selected:text-black dark:group-aria-selected:text-white">System</span>
-                    </Command.Item>
+                {/* Theme */}
+                <Command.Group
+                    heading="Theme"
+                    className="px-2 text-xs text-neutral-500 font-medium"
+                >
+                    <ThemeItem
+                        label="Light"
+                        icon={Sun}
+                        onClick={() => setTheme("light")}
+                        run={runCommand}
+                    />
+
+                    <ThemeItem
+                        label="Dark"
+                        icon={Moon}
+                        onClick={() => setTheme("dark")}
+                        run={runCommand}
+                    />
+
+                    <ThemeItem
+                        label="System"
+                        icon={Laptop}
+                        onClick={() => setTheme("system")}
+                        run={runCommand}
+                    />
                 </Command.Group>
             </Command.List>
 
-            <div className="border-t border-neutral-200 dark:border-neutral-800 p-2">
-                <p className="text-[10px] text-center text-neutral-400">
-                    Search powered by internal index
+            {/* Footer */}
+            <div
+                className="
+                    border-t border-black/5 dark:border-white/10
+                    px-3 py-2
+                    bg-white/30 dark:bg-black/30
+                "
+            >
+                <p className="text-[11px] text-center text-neutral-500">
+                    ⌘ K — Smart Command Palette
                 </p>
             </div>
         </Command.Dialog>
+    );
+}
+
+/* Reusable Theme Item */
+function ThemeItem({
+    label,
+    icon: Icon,
+    onClick,
+    run,
+}: {
+    label: string;
+    icon: any;
+    onClick: () => void;
+    run: (fn: () => void) => void;
+}) {
+    return (
+        <Command.Item
+            value={label}
+            onSelect={() => run(onClick)}
+            className="
+                flex items-center gap-3
+                px-3 py-2
+                rounded-lg
+                text-sm
+                cursor-pointer
+                transition-all
+                hover:bg-black/5 dark:hover:bg-white/10
+                aria-selected:bg-black/10
+                dark:aria-selected:bg-white/15
+            "
+        >
+            <Icon className="h-4 w-4 text-neutral-500" />
+            <span>{label}</span>
+        </Command.Item>
     );
 }
