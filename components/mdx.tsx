@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { codeToHtml } from "shiki/bundle/web";
+import { codeToHtml } from "shiki";
 import { cn } from "@/lib/utils";
-import { Plus, Copy, Check } from "lucide-react";
+import { Plus } from "lucide-react";
+import { CopyButton } from "./copy-button";
 
 const SUPPORTED_LANGS = new Set([
     "javascript", "js", "typescript", "ts", "tsx", "jsx",
@@ -16,51 +17,42 @@ async function CodeBlock({ code, lang }: { code: string; lang: string }) {
     const normalizedLang = lang.toLowerCase();
     const useLang = SUPPORTED_LANGS.has(normalizedLang) ? lang : "text";
 
-    try {
-        const lightHtml = await codeToHtml(code.trim(), {
-            lang: useLang,
-            theme: "github-light",
-        });
+    const lightHtml = await codeToHtml(code.trim(), {
+        lang: useLang,
+        theme: "github-light",
+    });
 
-        const darkHtml = await codeToHtml(code.trim(), {
-            lang: useLang,
-            theme: "github-dark",
-        });
+    const darkHtml = await codeToHtml(code.trim(), {
+        lang: useLang,
+        theme: "github-dark",
+    });
 
-        return (
-            <div className="group relative my-6 rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/50">
-                    <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+    return (
+        <div className="group relative my-8 rounded-2xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xl shadow-neutral-200/50 dark:shadow-none transition-all hover:shadow-2xl hover:shadow-neutral-300/50 dark:hover:shadow-none">
+            <div className="flex items-center justify-between px-5 py-2.5 bg-neutral-50/80 dark:bg-neutral-800/20 border-b border-neutral-200 dark:border-neutral-800 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                    <div className="flex gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-neutral-200 dark:bg-neutral-800 border border-neutral-300/50 dark:border-neutral-700/50" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-neutral-200 dark:bg-neutral-800 border border-neutral-300/50 dark:border-neutral-700/50" />
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-[0.2em] ml-2 select-none">
                         {lang}
                     </span>
                 </div>
+                <CopyButton code={code.trim()} />
+            </div>
+            <div className="relative">
                 <div
                     dangerouslySetInnerHTML={{ __html: lightHtml }}
-                    className="dark:hidden overflow-x-auto p-4 text-sm [&_pre]:!bg-transparent [&_code]:!bg-transparent"
+                    className="dark:hidden overflow-x-auto p-6 text-[13.5px] leading-relaxed font-mono [&_pre]:!bg-transparent [&_code]:!bg-transparent [&_code]:!font-mono"
                 />
                 <div
                     dangerouslySetInnerHTML={{ __html: darkHtml }}
-                    className="hidden dark:block overflow-x-auto p-4 text-sm [&_pre]:!bg-transparent [&_code]:!bg-transparent"
+                    className="hidden dark:block overflow-x-auto p-6 text-[13.5px] leading-relaxed font-mono [&_pre]:!bg-transparent [&_code]:!bg-transparent [&_code]:!font-mono"
                 />
             </div>
-        );
-    } catch {
-        // Fallback for unsupported languages
-        return (
-            <div className="group relative my-6 rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/50">
-                    <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-                        {lang}
-                    </span>
-                </div>
-                <pre className="overflow-x-auto p-4 text-sm">
-                    <code className="text-neutral-800 dark:text-neutral-200 whitespace-pre">
-                        {code.trim()}
-                    </code>
-                </pre>
-            </div>
-        );
-    }
+        </div>
+    );
 }
 
 export const CustomComponents = {

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
+import { DM_Sans, JetBrains_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import { Navbar } from "@/components/navbar";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -7,6 +7,11 @@ import "./globals.css";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
+  subsets: ["latin"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
@@ -23,6 +28,7 @@ const domaine = localFont({
 export const metadata: Metadata = {
   title: "SwiftJS Documentation",
   description: "A fast, modern, and type-safe web framework for Node.js and Bun",
+  icons: "/image.ico",
 };
 
 export default function RootLayout({
@@ -33,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${dmSans.variable} ${haskoy.variable} ${domaine.variable} antialiased bg-white dark:bg-black text-black dark:text-white font-sans`}
+        className={`${dmSans.variable} ${jetbrainsMono.variable} ${haskoy.variable} ${domaine.variable} antialiased bg-white dark:bg-black text-black dark:text-white font-sans`}
       >
         <ThemeProvider
           attribute="class"
