@@ -341,5 +341,136 @@ export const BADGES: BadgeStyle[] = [
             <text x="12" y="12" fill="#9CA3AF" style="font-family:sans-serif;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;">Powered by</text>
             <text x="12" y="26" fill="#171717" style="font-family:sans-serif;font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:-0.05em;">SwiftJS Engine</text>
         </svg>`
+    },
+    {
+        id: "fast-typed-modern",
+        name: "Fast · Typed · Modern",
+        render: (a) => (
+            <div className="flex items-center h-8 rounded-lg bg-neutral-900 dark:bg-white overflow-hidden">
+                <div className="px-3 h-full flex items-center border-r border-white/10 dark:border-black/10">
+                    <span className="text-[10px] font-black text-white dark:text-black uppercase tracking-widest">SwiftJS</span>
+                </div>
+                <div className="flex items-center gap-2 px-3">
+                    <span className="text-[8px] font-bold text-white/60 dark:text-black/50 uppercase tracking-widest">Fast</span>
+                    <span className="text-white/30 dark:text-black/20 text-[8px]">·</span>
+                    <span className="text-[8px] font-bold text-white/60 dark:text-black/50 uppercase tracking-widest">Typed</span>
+                    <span className="text-white/30 dark:text-black/20 text-[8px]">·</span>
+                    <span className="text-[8px] font-bold text-white/60 dark:text-black/50 uppercase tracking-widest">Modern</span>
+                </div>
+            </div>
+        ),
+        code: '<div style="display:inline-flex;align-items:center;height:32px;border-radius:8px;background:#171717;overflow:hidden;font-family:sans-serif;"><div style="padding:0 12px;height:100%;display:flex;align-items:center;border-right:1px solid rgba(255,255,255,0.1);"><span style="font-size:10px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:0.1em;">SwiftJS</span></div><div style="display:flex;align-items:center;gap:8px;padding:0 12px;"><span style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.1em;">Fast</span><span style="color:rgba(255,255,255,0.3);font-size:8px;">·</span><span style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.1em;">Typed</span><span style="color:rgba(255,255,255,0.3);font-size:8px;">·</span><span style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.1em;">Modern</span></div></div>',
+        svg: `<svg width="220" height="32" viewBox="0 0 220 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="220" height="32" rx="8" fill="#171717"/>
+            <line x1="70" y1="0" x2="70" y2="32" stroke="white" stroke-opacity="0.1"/>
+            <text x="35" y="20" text-anchor="middle" fill="white" style="font-family:sans-serif;font-weight:900;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;">SwiftJS</text>
+            <text x="100" y="20" fill="white" fill-opacity="0.6" style="font-family:sans-serif;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.1em;">FAST</text>
+            <text x="130" y="20" fill="white" fill-opacity="0.3" style="font-family:sans-serif;font-size:8px;">·</text>
+            <text x="140" y="20" fill="white" fill-opacity="0.6" style="font-family:sans-serif;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.1em;">TYPED</text>
+            <text x="175" y="20" fill="white" fill-opacity="0.3" style="font-family:sans-serif;font-size:8px;">·</text>
+            <text x="185" y="20" fill="white" fill-opacity="0.6" style="font-family:sans-serif;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.1em;">MODERN</text>
+        </svg>`
+    },
+    {
+        id: "terminal-cmd",
+        name: "Terminal Command",
+        render: (a) => (
+            <div className="flex items-center h-8 rounded-lg bg-neutral-950 border border-neutral-800 px-3 gap-2 font-mono">
+                <span className="text-emerald-400 text-[11px]">$</span>
+                <span className="text-neutral-400 text-[11px]">npx</span>
+                <span className="text-white text-[11px] font-bold">swiftjs</span>
+                <span className="text-neutral-600 text-[11px]">--init</span>
+            </div>
+        ),
+        code: '<div style="display:inline-flex;align-items:center;height:32px;border-radius:8px;background:#0a0a0a;border:1px solid #262626;padding:0 12px;gap:8px;font-family:monospace;"><span style="color:#34d399;font-size:11px;">$</span><span style="color:#9ca3af;font-size:11px;">npx</span><span style="color:#fff;font-size:11px;font-weight:700;">swiftjs</span><span style="color:#525252;font-size:11px;">--init</span></div>',
+        svg: `<svg width="170" height="32" viewBox="0 0 170 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0.5" y="0.5" width="169" height="31" rx="7.5" fill="#0A0A0A" stroke="#262626"/>
+            <text x="12" y="20" fill="#34D399" style="font-family:monospace;font-size:11px;">$</text>
+            <text x="24" y="20" fill="#9CA3AF" style="font-family:monospace;font-size:11px;">npx</text>
+            <text x="55" y="20" fill="white" style="font-family:monospace;font-weight:700;font-size:11px;">swiftjs</text>
+            <text x="115" y="20" fill="#525252" style="font-family:monospace;font-size:11px;">--init</text>
+        </svg>`
+    },
+    {
+        id: "gradient-pill",
+        name: "Gradient Pill",
+        render: (a) => (
+            <div className="flex items-center h-7 rounded-full bg-gradient-to-r from-neutral-900 to-neutral-700 dark:from-white dark:to-neutral-300 px-4 gap-2">
+                <Zap className="w-3 h-3 text-amber-400 dark:text-amber-500" />
+                <span className="text-[10px] font-black text-white dark:text-black uppercase tracking-widest">SwiftJS</span>
+            </div>
+        ),
+        code: '<div style="display:inline-flex;align-items:center;height:28px;border-radius:9999px;background:linear-gradient(to right,#171717,#404040);padding:0 16px;gap:8px;font-family:sans-serif;"><span style="font-size:10px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:0.1em;">⚡ SwiftJS</span></div>',
+        svg: `<svg width="110" height="28" viewBox="0 0 110 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="gp" x1="0" y1="0" x2="110" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#171717"/><stop offset="1" stop-color="#404040"/></linearGradient></defs>
+            <rect width="110" height="28" rx="14" fill="url(#gp)"/>
+            <path d="M20 8L16 15H20L18 22L24 13H20L22 8H20Z" fill="#FBBF24"/>
+            <text x="34" y="18" fill="white" style="font-family:sans-serif;font-weight:900;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;">SwiftJS</text>
+        </svg>`
+    },
+    {
+        id: "version-stamp",
+        name: "Version Stamp",
+        render: (a) => (
+            <div className="flex items-center h-7 overflow-hidden rounded border border-neutral-200 dark:border-white/10">
+                <div className="bg-neutral-900 dark:bg-white px-2.5 h-full flex items-center">
+                    <span className="text-[10px] font-black text-white dark:text-black uppercase tracking-wider">SwiftJS</span>
+                </div>
+                <div className="bg-emerald-500 px-2.5 h-full flex items-center">
+                    <span className="text-[10px] font-black text-white uppercase tracking-wider">v1.0</span>
+                </div>
+            </div>
+        ),
+        code: '<div style="display:inline-flex;align-items:center;height:28px;overflow:hidden;border-radius:4px;border:1px solid #e5e7eb;font-family:sans-serif;"><div style="background:#171717;padding:0 10px;height:100%;display:flex;align-items:center;"><span style="font-size:10px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:0.05em;">SwiftJS</span></div><div style="background:#10b981;padding:0 10px;height:100%;display:flex;align-items:center;"><span style="font-size:10px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:0.05em;">v1.0</span></div></div>',
+        svg: `<svg width="120" height="28" viewBox="0 0 120 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0.5" y="0.5" width="119" height="27" rx="3.5" stroke="#E5E7EB" fill="white"/>
+            <rect width="72" height="28" rx="4" fill="#171717"/>
+            <text x="36" y="18" text-anchor="middle" fill="white" style="font-family:sans-serif;font-weight:900;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;">SwiftJS</text>
+            <rect x="72" width="48" height="28" fill="#10B981"/>
+            <rect x="116" y="0" width="4" height="28" rx="0" fill="#10B981"/>
+            <text x="96" y="18" text-anchor="middle" fill="white" style="font-family:sans-serif;font-weight:900;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;">v1.0</text>
+        </svg>`
+    },
+    {
+        id: "arrow-badge",
+        name: "Arrow Badge",
+        render: (a) => (
+            <div className="flex items-center gap-1">
+                <div className="flex items-center h-6 bg-neutral-900 dark:bg-white rounded-l px-2.5">
+                    <span className="text-[10px] font-black text-white dark:text-black uppercase tracking-wider">Built with</span>
+                </div>
+                <div className="w-0 h-0 border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent border-l-[8px] border-l-neutral-900 dark:border-l-white" />
+                <span className="text-[10px] font-black text-neutral-900 dark:text-white uppercase tracking-tight ml-1">SwiftJS</span>
+            </div>
+        ),
+        code: '<div style="display:inline-flex;align-items:center;gap:4px;font-family:sans-serif;"><div style="display:flex;align-items:center;height:24px;background:#171717;border-radius:4px 0 0 4px;padding:0 10px;"><span style="font-size:10px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:0.05em;">Built with</span></div><div style="width:0;height:0;border-top:12px solid transparent;border-bottom:12px solid transparent;border-left:8px solid #171717;"></div><span style="font-size:10px;font-weight:900;color:#171717;text-transform:uppercase;margin-left:4px;">SwiftJS</span></div>',
+        svg: `<svg width="160" height="24" viewBox="0 0 160 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="80" height="24" rx="4" fill="#171717"/>
+            <text x="40" y="16" text-anchor="middle" fill="white" style="font-family:sans-serif;font-weight:900;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;">BUILT WITH</text>
+            <polygon points="80,0 92,12 80,24" fill="#171717"/>
+            <text x="102" y="16" fill="#171717" style="font-family:sans-serif;font-weight:900;font-size:10px;text-transform:uppercase;letter-spacing:-0.05em;">SwiftJS</text>
+        </svg>`
+    },
+    {
+        id: "monogram-circle",
+        name: "Monogram Circle",
+        render: (a) => (
+            <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-full bg-neutral-900 dark:bg-white flex items-center justify-center">
+                    <span className="text-[11px] font-black text-white dark:text-black italic">S</span>
+                </div>
+                <div className="flex flex-col leading-none">
+                    <span className="text-[11px] font-black text-neutral-900 dark:text-white tracking-tight">SwiftJS</span>
+                    <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-widest">Framework</span>
+                </div>
+            </div>
+        ),
+        code: '<div style="display:inline-flex;align-items:center;gap:10px;font-family:sans-serif;"><div style="width:28px;height:28px;border-radius:9999px;background:#171717;display:flex;align-items:center;justify-content:center;"><span style="font-size:11px;font-weight:900;color:#fff;font-style:italic;">S</span></div><div style="display:flex;flex-direction:column;"><span style="font-size:11px;font-weight:900;color:#171717;">SwiftJS</span><span style="font-size:8px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">Framework</span></div></div>',
+        svg: `<svg width="120" height="32" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="14" fill="#171717"/>
+            <text x="16" y="21" text-anchor="middle" fill="white" style="font-family:sans-serif;font-weight:900;font-size:11px;font-style:italic;">S</text>
+            <text x="38" y="15" fill="#171717" style="font-family:sans-serif;font-weight:900;font-size:11px;">SwiftJS</text>
+            <text x="38" y="26" fill="#9CA3AF" style="font-family:sans-serif;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.1em;">Framework</text>
+        </svg>`
     }
 ];
