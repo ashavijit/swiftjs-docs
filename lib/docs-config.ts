@@ -13,6 +13,7 @@ export const docsConfig = {
   mainNav: [
     { title: "Docs", href: "/docs/guide/introduction" },
     { title: "Plugins", href: "/plugins" },
+    { title: "Badges", href: "/badges" },
     { title: "Changelog", href: "/changelog" },
     { title: "API", href: "/docs/api/index" },
   ] as NavItem[],
