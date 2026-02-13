@@ -48,7 +48,7 @@ export function Hero() {
                 {/* Heading */}
                 <motion.h1
                     custom={1} variants={fadeUp} initial="hidden" animate="visible"
-                    className="font-serif text-6xl sm:text-8xl lg:text-[7rem] font-medium tracking-tight text-neutral-900 dark:text-white leading-[0.95] mb-8"
+                    className="font-domaine text-6xl sm:text-8xl lg:text-[7rem] font-medium tracking-tight text-neutral-900 dark:text-white leading-[0.95] mb-8"
                 >
                     Build API Engines <br className="hidden sm:block" />
                     <span className="bg-gradient-to-b from-neutral-900 to-neutral-500 dark:from-white dark:to-neutral-500 bg-clip-text text-transparent">

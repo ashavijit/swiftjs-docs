@@ -112,7 +112,7 @@ export function CodePreview() {
                         <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-900 text-white mb-6">
                             <Terminal className="w-5 h-5" />
                         </div>
-                        <h2 className="font-serif text-5xl sm:text-6xl font-medium text-neutral-900 dark:text-white mb-6 tracking-tight leading-[1.1]">
+                        <h2 className="font-domaine text-5xl sm:text-6xl font-medium text-neutral-900 dark:text-white mb-6 tracking-tight leading-[1.1]">
                             Build in minutes, <br />
                             not months.
                         </h2>

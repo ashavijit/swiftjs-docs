@@ -8,6 +8,9 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-haskoy);
   --font-serif: var(--font-domaine);
+  --font-domaine: var(--font-domaine);
+  --font-hikasami: var(--font-hikasami);
+  --font-zalando: var(--font-zalando);
   --font-mono: var(--font-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -182,6 +185,16 @@
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  overflow-x: clip;
+  /* Modern way to prevent overflow without scrollbars */
+}
+
+body {
+  overflow-x: hidden;
+  overflow-x: clip;
+  position: relative;
+  /* Ensure containment context */
 }
 
 /* Selection colors */

@@ -101,7 +101,7 @@ export function Navbar() {
               </div>
 
               <div className="flex flex-col leading-none">
-                <span className="font-serif text-lg font-bold tracking-tight text-neutral-900 dark:text-white">
+                <span className="font-domaine text-lg font-bold tracking-tight text-neutral-900 dark:text-white">
                   SwiftJS
                 </span>
                 <span className="text-[9px] font-bold text-neutral-400 dark:text-neutral-600 tracking-widest uppercase mt-0.5">

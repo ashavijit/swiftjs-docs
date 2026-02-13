@@ -69,7 +69,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="font-serif text-5xl sm:text-6xl font-medium text-neutral-900 dark:text-white mb-6 tracking-tight"
+              className="font-domaine text-5xl sm:text-6xl font-medium text-neutral-900 dark:text-white mb-6 tracking-tight"
             >
               Engineered for Excellence
             </motion.h2>
@@ -104,7 +104,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="font-serif text-6xl sm:text-8xl font-medium mb-10 tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-b from-neutral-900 via-neutral-600 to-black dark:from-white dark:via-neutral-400 dark:to-neutral-600"
+            className="font-domaine text-6xl sm:text-8xl font-medium mb-10 tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-b from-neutral-900 via-neutral-600 to-black dark:from-white dark:via-neutral-400 dark:to-neutral-600"
           >
             Ready to Build <br />
             the Future?

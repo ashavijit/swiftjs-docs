@@ -25,6 +25,16 @@ const domaine = localFont({
   variable: "--font-domaine",
 });
 
+const hikasami = localFont({
+  src: "../public/fonts/Hikasami-Regular.ttf",
+  variable: "--font-hikasami",
+});
+
+const zalando = localFont({
+  src: "../public/fonts/ZalandoSans-Regular.ttf",
+  variable: "--font-zalando",
+});
+
 export const metadata: Metadata = {
   title: "SwiftJS Documentation",
   description: "A fast, modern, and type-safe web framework for Node.js and Bun",
@@ -39,7 +49,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${dmSans.variable} ${jetbrainsMono.variable} ${haskoy.variable} ${domaine.variable} antialiased bg-white dark:bg-black text-black dark:text-white font-sans`}
+        className={`${dmSans.variable} ${jetbrainsMono.variable} ${haskoy.variable} ${domaine.variable} ${hikasami.variable} ${zalando.variable} antialiased bg-white dark:bg-black text-black dark:text-white font-sans`}
       >
         <ThemeProvider
           attribute="class"

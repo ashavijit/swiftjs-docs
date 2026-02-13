@@ -1,0 +1,570 @@
+swiftjs-plugin-s3
+AWS S3 cloud storage plugin for SwiftJS applications.
+
+Installation
+npm install swiftjs-plugin-s3
+Usage
+import { createApp } from 'swiftjs-core';
+import { s3Plugin, getS3 } from 'swiftjs-plugin-s3';
+
+const app = createApp();
+
+// Register the S3 plugin
+app.register(s3Plugin({
+    region: 'us-east-1',
+    bucket: 'my-bucket',
+    // Optional: explicit credentials (defaults to AWS SDK credential chain)
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+    }
+}));
+
+// Upload a file
+app.post('/upload', async (ctx) => {
+    const s3 = getS3(ctx);
+    const result = await s3.upload('uploads/image.png', ctx.body.file, {
+        contentType: 'image/png',
+        acl: 'public-read'
+    });
+    return { url: result.location };
+});
+
+// Download a file
+app.get('/download/:key', async (ctx) => {
+    const s3 = getS3(ctx);
+    const buffer = await s3.download(ctx.params.key);
+    return buffer;
+});
+
+// Generate presigned URL
+app.get('/presign/:key', async (ctx) => {
+    const s3 = getS3(ctx);
+    const url = await s3.getSignedUrl(ctx.params.key, 3600);
+    return { url };
+});
+
+// List files
+app.get('/files', async (ctx) => {
+    const s3 = getS3(ctx);
+    const result = await s3.list('uploads/', 100);
+    return result.objects;
+});
+
+app.listen();
+S3-Compatible Storage
+Works with any S3-compatible storage (MinIO, DigitalOcean Spaces, etc.):
+
+app.register(s3Plugin({
+    region: 'us-east-1',
+    bucket: 'my-bucket',
+    endpoint: 'https://minio.example.com',
+    forcePathStyle: true
+}));
+API
+s3Plugin(options)
+Register the S3 plugin with your SwiftJS app.
+
+getS3(ctx)
+Get the S3 client from the request context.
+
+S3Client Methods
+Method	Description
+upload(key, data, options?)	Upload a file
+download(key)	Download file as Buffer
+downloadStream(key)	Download file as ReadableStream
+delete(key)	Delete a file
+deleteMany(keys)	Delete multiple files
+exists(key)	Check if file exists
+getSignedUrl(key, expiresIn?)	Generate presigned download URL
+getSignedUploadUrl(key, expiresIn?, options?)	Generate presigned upload URL
+list(prefix?, maxKeys?, token?)	List files with prefix
+copy(sourceKey, destKey)	Copy a file
+License
+
+rateLimit code 
+import { definePlugin, type Context, type Middleware } from 'swiftjs-core';
+
+export interface RateLimitOptions {
+  [key: string]: unknown;
+  max: number;
+  window: number;
+  keyGenerator?: (ctx: Context) => string;
+  handler?: (ctx: Context) => void;
+  skipFailedRequests?: boolean;
+  skipSuccessfulRequests?: boolean;
+}
+
+interface RateLimitEntry {
+  count: number;
+  resetTime: number;
+}
+
+const DEFAULT_OPTIONS: RateLimitOptions = {
+  max: 100,
+  window: 60,
+};
+
+function rateLimitMiddleware(options: RateLimitOptions): Middleware {
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const store = new Map<string, RateLimitEntry>();
+
+  const keyGenerator = opts.keyGenerator || ((ctx: Context) => ctx.ip);
+  const handler =
+    opts.handler ||
+    ((ctx: Context) => {
+      ctx.status(429).json({
+        error: 'Too Many Requests',
+        message: 'Rate limit exceeded. Please try again later.',
+        retryAfter: Math.ceil(
+          (store.get(keyGenerator(ctx))?.resetTime ||
+            Date.now() + opts.window * 1000 - Date.now()) / 1000
+        ),
+      });
+    });
+
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of store) {
+      if (entry.resetTime <= now) {
+        store.delete(key);
+      }
+    }
+  }, 60000);
+
+  return async (ctx: Context, next: () => Promise<void>): Promise<void> => {
+    const key = keyGenerator(ctx);
+    const now = Date.now();
+
+    let entry = store.get(key);
+
+    if (!entry || entry.resetTime <= now) {
+      entry = {
+        count: 0,
+        resetTime: now + opts.window * 1000,
+      };
+      store.set(key, entry);
+    }
+
+    entry.count++;
+
+    const remaining = Math.max(0, opts.max - entry.count);
+    const reset = Math.ceil((entry.resetTime - now) / 1000);
+
+    ctx.res.setHeader('X-RateLimit-Limit', String(opts.max));
+    ctx.res.setHeader('X-RateLimit-Remaining', String(remaining));
+    ctx.res.setHeader('X-RateLimit-Reset', String(reset));
+
+    if (entry.count > opts.max) {
+      ctx.res.setHeader('Retry-After', String(reset));
+      handler(ctx);
+      return;
+    }
+
+    await next();
+
+    if (opts.skipSuccessfulRequests && ctx.res.statusCode < 400) {
+      entry.count--;
+    }
+    if (opts.skipFailedRequests && ctx.res.statusCode >= 400) {
+      entry.count--;
+    }
+  };
+}
+
+export const ratelimit = definePlugin<RateLimitOptions>(
+  'ratelimit',
+  (ctx, options) => {
+    ctx.use(rateLimitMiddleware(options));
+  },
+  DEFAULT_OPTIONS
+);
+
+export default ratelimit;
+
+generate docs
+
+import { createHmac } from 'node:crypto';
+import { definePlugin, type Context, type Middleware } from 'swiftjs-core';
+
+export interface JwtOptions {
+  [key: string]: unknown;
+  secret: string;
+  algorithms?: string[];
+  issuer?: string;
+  audience?: string;
+  expiresIn?: number;
+  extractToken?: (ctx: Context) => string | null;
+  onError?: (ctx: Context, error: Error) => void;
+  skip?: (ctx: Context) => boolean;
+}
+
+export interface JwtPayload {
+  [key: string]: unknown;
+  iat?: number;
+  exp?: number;
+  iss?: string;
+  aud?: string;
+  sub?: string;
+}
+
+interface JwtHeader {
+  alg: string;
+  typ: string;
+}
+
+function base64UrlEncode(data: string): string {
+  return Buffer.from(data).toString('base64url');
+}
+
+function base64UrlDecode(data: string): string {
+  return Buffer.from(data, 'base64url').toString('utf-8');
+}
+
+function sign(
+  payload: JwtPayload,
+  secret: string,
+  options?: { expiresIn?: number; issuer?: string; audience?: string }
+): string {
+  const header: JwtHeader = { alg: 'HS256', typ: 'JWT' };
+
+  const now = Math.floor(Date.now() / 1000);
+  const tokenPayload: JwtPayload = {
+    ...payload,
+    iat: now,
+  };
+
+  if (options?.expiresIn) {
+    tokenPayload.exp = now + options.expiresIn;
+  }
+  if (options?.issuer) {
+    tokenPayload.iss = options.issuer;
+  }
+  if (options?.audience) {
+    tokenPayload.aud = options.audience;
+  }
+
+  const encodedHeader = base64UrlEncode(JSON.stringify(header));
+  const encodedPayload = base64UrlEncode(JSON.stringify(tokenPayload));
+  const signature = createHmac('sha256', secret)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest('base64url');
+
+  return `${encodedHeader}.${encodedPayload}.${signature}`;
+}
+
+function verify(
+  token: string,
+  secret: string,
+  options?: { issuer?: string; audience?: string }
+): JwtPayload {
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    throw new Error('Invalid token format');
+  }
+
+  const [encodedHeader, encodedPayload, signature] = parts;
+
+  const expectedSignature = createHmac('sha256', secret)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest('base64url');
+
+  if (signature !== expectedSignature) {
+    throw new Error('Invalid signature');
+  }
+
+  const payload = JSON.parse(base64UrlDecode(encodedPayload)) as JwtPayload;
+
+  const now = Math.floor(Date.now() / 1000);
+  if (payload.exp && payload.exp < now) {
+    throw new Error('Token expired');
+  }
+
+  if (options?.issuer && payload.iss !== options.issuer) {
+    throw new Error('Invalid issuer');
+  }
+
+  if (options?.audience && payload.aud !== options.audience) {
+    throw new Error('Invalid audience');
+  }
+
+  return payload;
+}
+
+function defaultExtractToken(ctx: Context): string | null {
+  const auth = ctx.headers.authorization;
+  if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
+    return auth.slice(7);
+  }
+  return null;
+}
+
+function jwtMiddleware(options: JwtOptions): Middleware {
+  const extractToken = options.extractToken || defaultExtractToken;
+  const onError =
+    options.onError ||
+    ((ctx: Context, error: Error) => {
+      ctx.status(401).json({
+        error: 'Unauthorized',
+        message: error.message,
+      });
+    });
+
+  return async (ctx: Context, next: () => Promise<void>): Promise<void> => {
+    if (options.skip?.(ctx)) {
+      await next();
+      return;
+    }
+
+    const token = extractToken(ctx);
+    if (!token) {
+      onError(ctx, new Error('No token provided'));
+      return;
+    }
+
+    try {
+      const payload = verify(token, options.secret, {
+        issuer: options.issuer,
+        audience: options.audience,
+      });
+      ctx.state.set('user', payload);
+      ctx.state.set('jwt', token);
+    } catch (error) {
+      onError(ctx, error as Error);
+      return;
+    }
+
+    await next();
+  };
+}
+
+export const jwt = definePlugin<JwtOptions>('jwt', (ctx, options) => {
+  ctx.container.register('jwt', () => ({
+    sign: (payload: JwtPayload) =>
+      sign(payload, options.secret, {
+        expiresIn: options.expiresIn,
+        issuer: options.issuer,
+        audience: options.audience,
+      }),
+    verify: (token: string) =>
+      verify(token, options.secret, {
+        issuer: options.issuer,
+        audience: options.audience,
+      }),
+  }));
+
+  ctx.use(jwtMiddleware(options));
+});
+
+export { sign, verify };
+export default jwt;
+
+generate api docs like s3 format
+import {
+  definePlugin,
+  type Context,
+  type Middleware,
+  type Plugin,
+  type PluginFactory,
+} from 'swiftjs-core';
+
+export interface CorsOptions {
+  [key: string]: unknown;
+  origin?: string | string[] | boolean | ((origin: string) => boolean);
+  methods?: string[];
+  allowedHeaders?: string[];
+  exposedHeaders?: string[];
+  credentials?: boolean;
+  maxAge?: number;
+}
+
+const DEFAULT_OPTIONS: CorsOptions = {
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  credentials: false,
+  maxAge: 86400,
+};
+
+function isOriginAllowed(origin: string, allowed: CorsOptions['origin']): boolean {
+  if (allowed === true || allowed === '*') return true;
+  if (allowed === false) return false;
+  if (typeof allowed === 'string') return origin === allowed;
+  if (Array.isArray(allowed)) return allowed.includes(origin);
+  if (typeof allowed === 'function') return allowed(origin);
+  return false;
+}
+
+function corsMiddleware(options: CorsOptions): Middleware {
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+
+  return async (ctx: Context, next: () => Promise<void>): Promise<void> => {
+    const origin = (ctx.headers.origin as string) || '';
+    const allowed = isOriginAllowed(origin, opts.origin);
+
+    if (allowed) {
+      const allowOrigin =
+        opts.origin === true ? origin : typeof opts.origin === 'string' ? opts.origin : origin;
+      ctx.res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+    }
+
+    if (opts.credentials) {
+      ctx.res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+
+    if (opts.exposedHeaders?.length) {
+      ctx.res.setHeader('Access-Control-Expose-Headers', opts.exposedHeaders.join(', '));
+    }
+
+    if (ctx.req.method === 'OPTIONS') {
+      if (opts.methods?.length) {
+        ctx.res.setHeader('Access-Control-Allow-Methods', opts.methods.join(', '));
+      }
+      if (opts.allowedHeaders?.length) {
+        ctx.res.setHeader('Access-Control-Allow-Headers', opts.allowedHeaders.join(', '));
+      }
+      if (opts.maxAge) {
+        ctx.res.setHeader('Access-Control-Max-Age', String(opts.maxAge));
+      }
+      ctx.status(204).text('');
+      return;
+    }
+
+    await next();
+  };
+}
+
+export const cors: PluginFactory<CorsOptions> = definePlugin<CorsOptions>(
+  'cors',
+  (ctx, options) => {
+    ctx.use(corsMiddleware(options));
+  },
+  DEFAULT_OPTIONS
+);
+
+export default cors;
+
+import { definePlugin, type Context, type Middleware } from 'swiftjs-core';
+
+export interface HelmetOptions {
+  [key: string]: unknown;
+  contentSecurityPolicy?: boolean | { directives?: Record<string, string[]> };
+  crossOriginEmbedderPolicy?: boolean;
+  crossOriginOpenerPolicy?: boolean | { policy?: string };
+  crossOriginResourcePolicy?: boolean | { policy?: string };
+  dnsPrefetchControl?: boolean | { allow?: boolean };
+  frameguard?: boolean | { action?: 'deny' | 'sameorigin' };
+  hidePoweredBy?: boolean;
+  hsts?: boolean | { maxAge?: number; includeSubDomains?: boolean; preload?: boolean };
+  ieNoOpen?: boolean;
+  noSniff?: boolean;
+  originAgentCluster?: boolean;
+  permittedCrossDomainPolicies?: boolean | { permittedPolicies?: string };
+  referrerPolicy?: boolean | { policy?: string | string[] };
+  xssFilter?: boolean;
+}
+
+const DEFAULT_OPTIONS: HelmetOptions = {
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: true,
+  crossOriginResourcePolicy: true,
+  dnsPrefetchControl: true,
+  frameguard: true,
+  hidePoweredBy: true,
+  hsts: true,
+  ieNoOpen: true,
+  noSniff: true,
+  originAgentCluster: true,
+  permittedCrossDomainPolicies: true,
+  referrerPolicy: true,
+  xssFilter: false,
+};
+
+function helmetMiddleware(options: HelmetOptions): Middleware {
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+
+  return async (ctx: Context, next: () => Promise<void>): Promise<void> => {
+    if (opts.hidePoweredBy) {
+      ctx.res.removeHeader('X-Powered-By');
+    }
+
+    if (opts.noSniff) {
+      ctx.res.setHeader('X-Content-Type-Options', 'nosniff');
+    }
+
+    if (opts.frameguard) {
+      const action = typeof opts.frameguard === 'object' ? opts.frameguard.action : 'sameorigin';
+      ctx.res.setHeader('X-Frame-Options', action?.toUpperCase() || 'SAMEORIGIN');
+    }
+
+    if (opts.hsts) {
+      const hstsOpts = typeof opts.hsts === 'object' ? opts.hsts : {};
+      const maxAge = hstsOpts.maxAge ?? 15552000;
+      let value = `max-age=${maxAge}`;
+      if (hstsOpts.includeSubDomains !== false) value += '; includeSubDomains';
+      if (hstsOpts.preload) value += '; preload';
+      ctx.res.setHeader('Strict-Transport-Security', value);
+    }
+
+    if (opts.dnsPrefetchControl) {
+      const allow =
+        typeof opts.dnsPrefetchControl === 'object' ? opts.dnsPrefetchControl.allow : false;
+      ctx.res.setHeader('X-DNS-Prefetch-Control', allow ? 'on' : 'off');
+    }
+
+    if (opts.ieNoOpen) {
+      ctx.res.setHeader('X-Download-Options', 'noopen');
+    }
+
+    if (opts.crossOriginOpenerPolicy) {
+      const policy =
+        typeof opts.crossOriginOpenerPolicy === 'object'
+          ? opts.crossOriginOpenerPolicy.policy
+          : 'same-origin';
+      ctx.res.setHeader('Cross-Origin-Opener-Policy', policy || 'same-origin');
+    }
+
+    if (opts.crossOriginResourcePolicy) {
+      const policy =
+        typeof opts.crossOriginResourcePolicy === 'object'
+          ? opts.crossOriginResourcePolicy.policy
+          : 'same-origin';
+      ctx.res.setHeader('Cross-Origin-Resource-Policy', policy || 'same-origin');
+    }
+
+    if (opts.originAgentCluster) {
+      ctx.res.setHeader('Origin-Agent-Cluster', '?1');
+    }
+
+    if (opts.referrerPolicy) {
+      const policy =
+        typeof opts.referrerPolicy === 'object'
+          ? Array.isArray(opts.referrerPolicy.policy)
+            ? opts.referrerPolicy.policy.join(', ')
+            : opts.referrerPolicy.policy
+          : 'no-referrer';
+      ctx.res.setHeader('Referrer-Policy', policy || 'no-referrer');
+    }
+
+    if (opts.permittedCrossDomainPolicies) {
+      const policies =
+        typeof opts.permittedCrossDomainPolicies === 'object'
+          ? opts.permittedCrossDomainPolicies.permittedPolicies
+          : 'none';
+      ctx.res.setHeader('X-Permitted-Cross-Domain-Policies', policies || 'none');
+    }
+
+    await next();
+  };
+}
+
+export const helmet = definePlugin<HelmetOptions>(
+  'helmet',
+  (ctx, options) => {
+    ctx.use(helmetMiddleware(options));
+  },
+  DEFAULT_OPTIONS
+);
+
+export default helmet;

@@ -12,8 +12,9 @@ export type SidebarNavItem = {
 export const docsConfig = {
   mainNav: [
     { title: "Docs", href: "/docs/guide/introduction" },
+    { title: "Plugins", href: "/plugins" },
+    { title: "Changelog", href: "/changelog" },
     { title: "API", href: "/docs/api/index" },
-    { title: "Examples", href: "/docs/guide/examples" },
   ] as NavItem[],
 
   sidebar: [
