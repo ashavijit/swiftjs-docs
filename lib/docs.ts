@@ -25,12 +25,29 @@ export async function getDocBySlug(slug: string[]): Promise<Doc | null> {
   const fileContents = fs.readFileSync(fullPath, "utf8");
   const { data, content } = matter(fileContents);
 
+  let title = data.title;
+  let finalContent = content.trim();
+
+  if (!title) {
+    const match = finalContent.match(/^#\s+(.+)$/m);
+    if (match) {
+      title = match[1];
+      finalContent = finalContent.replace(/^#\s+.+$/m, "").trim();
+    } else {
+      title = slug[slug.length - 1].split("-").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+    }
+  }
+
   return {
     slug: realSlug,
-    meta: data,
-    content,
+    meta: {
+      ...data,
+      title,
+    },
+    content: finalContent,
   };
 }
+
 
 function getAllMdxFiles(dir: string, basePath: string = ""): string[][] {
   const entries = fs.readdirSync(dir, { withFileTypes: true });

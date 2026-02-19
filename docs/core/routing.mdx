@@ -125,19 +125,57 @@ SwiftJS automatically extracts versions from:
 2. **Path**: Leading segments like `/v1/users`.
 3. **Query**: `?version=v1`.
 
-## Performance: Radix Router
+## The Radix Engine
 
-SwiftJS uses a highly optimized **Radix Tree Router** for matching routes.
+At the heart of SwiftJS's routing is a high-performance **Radix Tree (Patricia Tree)**. This structure allows for exceptionally fast route matching with predictable performance, regardless of the number of registered routes.
 
-### Features
+### Visualizing the Radix Tree
 
-- **O(1) Static Route Matching**: Static routes (e.g., `/health`) are matched via a fast-path lookup, bypassing the tree traversal.
-- **Parametric Optimization**: Dynamic segments (e.g., `:id`) are processed with minimal overhead.
-- **Zero-Allocation Matching**: The router avoids object allocations during the critical matching path.
-- **Hybrid Sync/Async Execution**: 
-  - If a handler is synchronous, it is executed directly on the stack.
-  - This avoids the overhead of Promise creation and microtask scheduling, making synchronous "hot paths" extremely fast.
-- **Path Compression**: Common prefixes are merged to reduce the number of nodes in the tree.
+```mermaid
+graph TD
+    Root["/"]
+    Root --> API["api/"]
+    API --> V1["v1/"]
+    V1 --> Posts["posts"]
+    V1 --> Users["users/"]
+    Users --> UserId[":id"]
+    
+    Root --> Health["health"]
+    Root --> Static["static/*"]
+
+    style Root fill:#f9f9f9,stroke:#333
+    style UserId fill:#fff4dd,stroke:#d4a017
+    style Static fill:#e1f5fe,stroke:#01579b
+```
+
+### Matching Precedence
+
+SwiftJS follows a strict precedence model to resolve route conflicts:
+1. **Static Routes**: Exact string matches (e.g., `/api/v1/posts`) are matched first via a pre-calculated index.
+2. **Parametric Routes**: Dynamic segments (e.g., `/users/:id`) are matched if no static route exists.
+3. **Wildcard Routes**: Catch-all segments (e.g., `/*path`) have the lowest priority.
+
+## Performance Architecture
+
+SwiftJS doesn't just match routes; it optimizes the entire execution path.
+
+### 1. Zero-Allocation Matching
+During the matching process, the router does not allocate new objects. Instead:
+- It uses a specialized pointer-based system to scan the URI.
+- Route parameters are sliced directly into the `HttpContext` parametric buffer.
+- This results in zero garbage collection pressure on the "hot path".
+
+### 2. Parametric Optimization Buckets
+The Radix Tree nodes are bucketed by their segment type. When the engine encounters a dynamic segment, it uses an optimized lookup table to jump to the correct sub-node, avoiding costly string comparisons.
+
+### 3. Hybrid Sync/Async Dispatch
+One of the most powerful features of SwiftJS is its **Hybrid Dispatcher**.
+- **Sync Path**: If your handler and all associated middlewares are synchronous, the framework executes them in a single contiguous block on the call stack. This eliminates the overhead of `Promise` creation and microtask scheduling.
+- **Async Path**: If any part of the chain is `async`, the runner seamlessly transitions to an asynchronous execution model.
+
+> [!TIP]
+> **Performance Tip**: Whenever possible, use synchronous middlewares and handlers for "hot" heartbeat or health-check routes to maximize throughput.
+
 
 ## Route Parameters
 

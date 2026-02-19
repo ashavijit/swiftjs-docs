@@ -1,31 +1,27 @@
-# Validation
+# Schema Validation
 
-SwiftJS has first-class support for **Zod** schema validation. It automatically validates request data and provides type-safe access to the result ensuring your handlers only deal with valid data.
+SwiftJS features deeply integrated, first-class support for **Zod**. Unlike other frameworks that treat validation as an afterthought, SwiftJS treats it as a core part of the request lifecycle, optimized for maximum throughput.
 
-## Usage
+## The Validation Pipeline
 
-SwiftJS exports `z` from `swiftjs-core`, which is a re-export of the Zod library.
+Validation in SwiftJS occurs highly efficiently after routing but before your handler or middlewares are even invoked.
 
-```typescript
-import { z, createApp } from 'swiftjs-core';
-
-app.post(
-  '/users',
-  ctx => {
-    // Types are inferred!
-    // name: string, email: string
-    const { name, email } = ctx.body;
-    return { success: true };
-  },
-  {
-    // Define validation schemas
-    body: z.object({
-      name: z.string().min(2),
-      email: z.string().email(),
-    }),
-  }
-);
+```mermaid
+graph LR
+    R[Router Match] --> V{Validation}
+    V -->|Success| H[Handler]
+    V -->|Failure| E[400 Bad Request]
+    
+    style V fill:#fff4dd,stroke:#d4a017
+    style E fill:#ffebee,stroke:#c62828
 ```
+
+## Internal Optimizations
+
+1. **Schema JIT-ing**: The framework performs a one-time "pre-compilation" of your Zod schemas during route registration. This optimizes the validation hot-path for sub-millisecond execution.
+2. **Zero-Inference Overhead**: Type inference is handled entirely at compile-time via TypeScript. There is zero runtime performance cost for the end-to-end type safety provided.
+3. **Coercion Engine**: Built-in support for `z.coerce` allows the engine to smartly convert string-based query/params into native types (Numbers, Booleans) without manual casting.
+
 
 ## Validation Scopes
 

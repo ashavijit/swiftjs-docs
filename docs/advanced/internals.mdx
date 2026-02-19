@@ -29,6 +29,28 @@ SwiftJS implements **Context Pooling**:
 - **Reset**: After the response is sent, the context is cleared (references set to `null`) and returned to the pool.
 - **Impact**: This reduces GC cycles by up to 80% in high-concurrency scenarios.
 
+```mermaid
+sequenceDiagram
+    participant OS as OS/Network
+    participant Pool as Context Pool
+    participant App as SwiftJS App
+    
+    OS->>App: Incoming Request
+    App->>Pool: acquire()
+    alt Pool not empty
+        Pool-->>App: Existing HttpContext
+    else Pool empty
+        Pool-->>App: New HttpContext (Grow)
+    end
+    App->>App: Handle Request
+    App->>OS: Send Response
+    App->>Pool: release(ctx)
+    Pool->>Pool: Reset Context (nullify refs)
+```
+
+### Technical Deep Dive:
+The pool has a default capacity of **1024 contexts**. If the pool is exhausted during a massive burst, SwiftJS will fall back to creating temporary objects, which are then discarded rather than returned to the pool once it's full. This prevents the pool from growing indefinitely and consuming too much memory.
+
 ## 3. Hybrid Sync/Async Execution
 
 Most modern frameworks are "all-in" on `async/await`. While convenient, creating a `Promise` for every single middleware and handler adds overhead.
@@ -36,6 +58,27 @@ Most modern frameworks are "all-in" on `async/await`. While convenient, creating
 SwiftJS uses a **Sync-First** execution model:
 - **Fast Path**: If a route has no middleware and the handler returns a plain object (not a Promise), SwiftJS executes it synchronously and sends the response immediately.
 - **Dynamic Transition**: SwiftJS only switches to the asynchronous microtask queue if a middleware calls `next()` or a handler returns a `Promise`.
+
+```mermaid
+flowchart TD
+    Req[Incoming Request] --> Router[Radix Router]
+    Router --> MW{Has Middleware?}
+    MW -- No --> Handler[Execute Handler]
+    MW -- Yes --> MWType{Any Async MW?}
+    
+    MWType -- No --> Handler
+    MWType -- Yes --> Async[Switch to Microtask Queue]
+    
+    Handler --> ResType{Is Promise?}
+    ResType -- No --> Send[Sync Response]
+    ResType -- Yes --> Async
+    
+    Async --> Await[Await Promise/Chain]
+    Await --> Send
+```
+
+### Event Loop Optimization:
+By avoiding `Promise` creation on the fast path, SwiftJS stays on the current event loop tick. This results in sub-millisecond response times for simple API endpoints, as there is no overhead from the V8 promise scheduler.
 
 | Feature | SwiftJS | Traditional Frameworks |
 | :--- | :--- | :--- |
@@ -65,3 +108,18 @@ SwiftJS treats the runtime as a pluggable component. While it provides a standar
 
 - **uWS Adapter**: Bypasses the Node.js `http` module and its native HTTP parser entirely. It talks directly to the C++ bindings of uWebSockets, pushing performance toward **100k+ req/sec**.
 - **Bun/Edge Adapters**: Optimized for the specific APIs of those environments (e.g., `Bun.serve`).
+
+```mermaid
+graph LR
+    subgraph Core ["SwiftJS Engine"]
+        Logic["Routing & Context"]
+    end
+    
+    Logic --> Adapter["Adapter Interface"]
+    
+    subgraph Runtimes ["Pluggable Adapters"]
+        Adapter --> Node["Node.js (http)"]
+        Adapter --> uWS["uWebSockets.js"]
+        Adapter --> Bun["Bun / Elysia"]
+    end
+```

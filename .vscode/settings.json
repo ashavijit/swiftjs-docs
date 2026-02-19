@@ -1,0 +1,71 @@
+{
+  // === Editor ===
+  "editor.fontFamily": "JetBrains Mono",
+  "editor.fontSize": 14,
+  "editor.lineHeight": 22,
+  "editor.fontLigatures": true,
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.cursorBlinking": "smooth",
+  "editor.smoothScrolling": true,
+  "editor.minimap.enabled": false,
+  "editor.renderWhitespace": "none",
+  "editor.tabSize": 2,
+  "editor.wordWrap": "on",
+  "editor.inlineSuggest.enabled": true,
+
+  // === Disable Dotted / Guide Lines ===
+  "editor.guides.indentation": false,
+  "editor.guides.highlightActiveIndentation": false,
+  "editor.guides.bracketPairs": false,
+
+  // === Formatting ===
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.singleQuote": true,
+  "prettier.semi": false,
+
+  // === TypeScript / JavaScript ===
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.suggest.autoImports": true,
+  "javascript.suggest.autoImports": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "javascript.preferences.importModuleSpecifier": "relative",
+
+  // === Theme & UI ===
+  "workbench.colorTheme": "Monokai Classic",
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.startupEditor": "none",
+  "window.zoomLevel": 0,
+
+  // === Terminal ===
+  "terminal.integrated.fontFamily": "JetBrains Mono",
+  "terminal.integrated.fontSize": 13,
+  "terminal.integrated.cursorBlinking": true,
+
+  // === Explorer ===
+  "explorer.compactFolders": false,
+  "explorer.confirmDelete": false,
+
+  // === Git ===
+  "git.autofetch": true,
+  "git.confirmSync": false,
+
+  // === Performance ===
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 800,
+
+  // === ESLint ===
+  "eslint.validate": ["javascript", "typescript"],
+
+  // === Brackets ===
+  "editor.bracketPairColorization.enabled": true,
+
+  // === Language Formatters ===
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  }
+}

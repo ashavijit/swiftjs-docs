@@ -1,21 +1,32 @@
 # Configuration & Environment
 
-SwiftJS provides a robust system for managing application configuration across different environments (Development, Staging, Production).
+SwiftJS provides a production-grade configuration system designed for security, type-safety, and performance.
 
-## Environment Variables
+## The "Fail-Fast" Principle
 
-The framework automatically loads `.env` files using its internal `loadEnv` utility (powered by `dotenv` and `dotenv-expand`).
+A core tenet of the SwiftJS philosophy is **Validation at Boot**.
+- **The Problem**: Applications that crash 10 minutes after deploy because of a missing API key are unreliable.
+- **The Solution**: We strongly recommend using Zod to validate your entire configuration schema during the application's initialization. If a secret is missing, the process should exit immediately with a clear error.
 
-```typescript
-import { createApp, loadEnv } from 'swiftjs-core';
+## Architecture: Config via DI
 
-loadEnv(); // Loads .env into process.env
+For maximum performance and clean architecture, configuration should be injected into your services via the **Dependency Injection (DI) Container**.
 
-const app = createApp({
-  port: Number(process.env.PORT) || 3000,
-  trustProxy: process.env.TRUST_PROXY === 'true'
-});
+```mermaid
+graph TD
+    ENV[".env / process.env"] --> VAL["Schema Validation (Zod)"]
+    VAL --> DI["DI Container (Singleton)"]
+    DI --> S1["DatabaseService"]
+    DI --> S2["AuthService"]
+    
+    style VAL fill:#fff4dd,stroke:#d4a017
 ```
+
+### Why use DI for config?
+1. **Zero-Overhead Access**: Accessing a singleton from the DI container is highly optimized and avoids repeated `process.env` lookups, which can be surprisingly slow in tight loops.
+2. **Easy Testing**: You can easily swap production config for test mockups during unit tests.
+3. **Type-Safety**: Your entire application benefits from full Intellisense based on your validated schema.
+
 
 ## Centralized Config Pattern
 

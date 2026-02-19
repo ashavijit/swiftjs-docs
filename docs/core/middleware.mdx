@@ -137,15 +137,50 @@ app.use(
 );
 ```
 
+## Execution Model: The Onion
+
+SwiftJS middleware follows the "Onion Model," where each middleware has the opportunity to perform logic before the next handler (Request Phase) and after it returns (Response Phase).
+
+```mermaid
+graph LR
+    subgraph Request ["Request Phase"]
+        M1[Middleware 1] --> M2[Middleware 2]
+        M2 --> H[Handler]
+    end
+
+    subgraph Response ["Response Phase"]
+        H --> RM2[Middleware 2]
+        RM2 --> RM1[Middleware 1]
+    end
+
+    Client([Client]) --> M1
+    RM1 --> Result([Result])
+    
+    style H fill:#fff4dd,stroke:#d4a017
+    style Request fill:transparent,stroke-dasharray: 5 5
+    style Response fill:transparent,stroke-dasharray: 5 5
+```
+
+## Internal Mechanics: The Iterative Runner
+
+Unlike traditional frameworks (like Koa) that use recursive `next()` calls—which can lead to `Maximum call stack size exceeded` errors in deep chains—SwiftJS uses a **High-Performance Iterative Runner**.
+
+### Why it matters:
+- **Loop vs Recursion**: We execute the chain in a flattened loop. This reduces the pressure on the JavaScript call stack.
+- **State Management**: The context state and stack data are preserved in a pre-allocated array, optimized for cache locality.
+- **Bailout Optimization**: If a middleware chooses not to call `next()`, the runner immediately breaks the loop and begins the response phase, saving unnecessary cycles.
+
+
+
 ## Middleware Execution Order
 
-1. **Global Middleware** (in order of definition)
-2. **Route Middleware** (in order of array)
-3. **Route Handler**
-4. **Response** (back up the stack)
+The execution flow is strictly deterministic:
 
-This allows middleware to "wrap" the entire request lifecycle, useful for:
+1. **Global Scoped Mids**: Executed in the exact order they were registered via `app.use()`.
+2. **Plugin Scoped Mids**: Registered via `app.register()` as part of plugin initialization.
+3. **Route Scoped Mids**: Defined in your route config.
+4. **Target Handler**: Your final controller logic.
 
-- Logging (start/end)
-- Error handling (try/catch around `next()`)
-- Transactions (begin/commit/rollback)
+> [!IMPORTANT]
+> Because SwiftJS supports **Hybrid Execution**, if all middlewares in the chain are synchronous, the entire runner stays on the sync path. Adding even one `async` middleware will move the remainder of the chain to the microtask queue.
+
