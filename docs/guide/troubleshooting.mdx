@@ -6,7 +6,7 @@ Common issues encountered when working with SwiftJS and their recommended soluti
 
 ### 1. "TypeError: ctx.user is undefined"
 **Problem**: You are trying to access a context decoration that hasn't been registered or populated.
-**Solution**: Ensure your [Authentication Middleware](../features/authentication) or specific decoration is registered *before* the route that uses it.
+**Solution**: Ensure your [Authentication Middleware](../features/authentication.mdx) or specific decoration is registered *before* the route that uses it.
 
 ### 2. "Bun.nanoseconds is not a function"
 **Problem**: You are running a Bun-optimized version of the framework on Node.js using an incorrect adapter.
@@ -21,7 +21,7 @@ const app = new Swift({ bodyLimit: '5mb' });
 ```
 
 ### 4. "ZodError: Invalid input"
-**Problem**: Your request doesn't match the schema defined in your [Validation](../features/validation).
+**Problem**: Your request doesn't match the schema defined in your [Validation](../features/validation.mdx).
 **Solution**: Check the error payload returned by SwiftJS. It contains a detailed `path` and `message` for which field failed validation.
 
 ## Frequently Asked Questions
@@ -36,7 +36,7 @@ Yes! SwiftJS provides a `fromExpress()` utility to convert legacy Express middle
 Yes, use the `@swiftjs/adapter-lambda` for AWS Lambda or the `CloudflareAdapter` for Edge functions.
 
 ### How do I handle file uploads?
-Use the built-in [Multipart Parser](../plugins/storage) or the S3 plugin for managed storage.
+Use the built-in [Multipart Parser](../plugins/storage.mdx) or the S3 plugin for managed storage.
 
 ## Getting Further Help
 - **GitHub Issues**: For bug reports and feature requests.

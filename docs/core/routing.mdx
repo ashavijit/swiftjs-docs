@@ -91,19 +91,53 @@ app.group('/api/v1', api => {
 });
 ```
 
+## Route Constraints
+
+Constraints allow you to restrict routes based on runtime conditions like hostname, API version, or custom headers.
+
+```typescript
+import { createApp, versionConstraint, hostConstraint } from 'swiftjs-core';
+
+const app = createApp();
+
+// Version-based routing
+app.get('/users', handler, {
+  constraints: versionConstraint('v1', 'v2')
+});
+
+// Hostname-based routing
+app.get('/admin', adminHandler, {
+  constraints: hostConstraint('admin.example.com')
+});
+
+// Custom constraints
+app.get('/beta-feature', betaHandler, {
+  constraints: {
+    custom: async (ctx) => ctx.headers['x-beta-user'] === 'true'
+  }
+});
+```
+
+### Version Extraction logic
+
+SwiftJS automatically extracts versions from:
+1. **Headers**: `Accept-Version` or `X-API-Version`.
+2. **Path**: Leading segments like `/v1/users`.
+3. **Query**: `?version=v1`.
+
 ## Performance: Radix Router
 
 SwiftJS uses a highly optimized **Radix Tree Router** for matching routes.
 
 ### Features
 
-- **O(1) Static Route Matching:** Static routes (e.g., `/health`) are cached in a Map for instant lookup, bypassing the tree traversal entirely.
-- **Parametric Optimization:** The tree is optimized to minimize dynamic parameter overhead.
-- **Zero-Allocation Matching:** The router uses reusable match objects to reduce garbage collection pressure.
-- **Hybrid Sync/Async Execution:** Routes that don't need async/await are executed synchronously on the stack, bypassing Promise allocation and microtask queues completely.
-- **Path Compression:** Common prefixes are compressed to reduce tree depth.
-
-This architecture ensures that route matching is never the bottleneck, even with thousands of routes.
+- **O(1) Static Route Matching**: Static routes (e.g., `/health`) are matched via a fast-path lookup, bypassing the tree traversal.
+- **Parametric Optimization**: Dynamic segments (e.g., `:id`) are processed with minimal overhead.
+- **Zero-Allocation Matching**: The router avoids object allocations during the critical matching path.
+- **Hybrid Sync/Async Execution**: 
+  - If a handler is synchronous, it is executed directly on the stack.
+  - This avoids the overhead of Promise creation and microtask scheduling, making synchronous "hot paths" extremely fast.
+- **Path Compression**: Common prefixes are merged to reduce the number of nodes in the tree.
 
 ## Route Parameters
 

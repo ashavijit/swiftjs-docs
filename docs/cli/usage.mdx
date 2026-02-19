@@ -38,70 +38,110 @@ swiftjs dev
 
 - `-p, --port <number>`: Port to listen on (default: 3000)
 - `-H, --host <host>`: Host to bind to (default: localhost)
+- `-i, --interval <ms>`: Poll interval for changes (default: 200)
 
 ### `build`
 
-Build the application for production. Compiles TypeScript to JavaScript in the `dist` folder.
+Build the application for production using esbuild.
 
 ```bash
-swiftjs build
+swiftjs build [options]
 ```
 
 **Options:**
 
 - `--out-dir <dir>`: Output directory (default: dist)
 - `--entry <file>`: Entry file (default searches for src/index.ts)
+- `--minify`: Minify the output (default: true)
+- `--sourcemapping`: Generate source maps (default: true)
+- `--single`: Build a standalone executable (Single Executable Application)
 
 ### `start`
 
 Start the production server. Expects the app to be built first.
 
 ```bash
-swiftjs start
+swiftjs start [options]
 ```
 
 **Options:**
 
 - `-p, --port <number>`: Port to listen on (default: 3000)
+- `-H, --host <host>`: Host to bind to (default: 0.0.0.0)
 
-### `generate`
+### `generate` (Alias: `g`)
 
 Generate new components from templates.
 
 ```bash
-swiftjs generate <type> <name>
-# Alias: swiftjs g
+swiftjs generate <type> <name> [options]
 ```
 
 **Types:**
 
-- `route`: Create a new route file (e.g., `swiftjs g route users/create`)
-- `middleware`: Create a middleware file
-- `plugin`: Create a new plugin
-- `service`: Create a service class
+- `route`: Create a new route file. (Options: `-m, --methods <list>`)
+- `middleware`: Create a middleware file.
+- `plugin`: Create a new plugin.
+- `service`: Create a service class.
+
+### `make`
+
+Scaffold complex application components.
+
+- `make:controller <name>`: Scaffold a controller with CRUD methods.
+- `make:middleware <name>`: Scaffold a middleware function.
+- `make:service <name>`: Scaffold a service class.
+
+### `db`
+
+Database management commands.
+
+- `db:migrate`: Run pending migrations.
+- `db:migrate --create <name>`: Create a new migration.
+- `db:migrate --rollback`: Roll back the last migration.
+
+### `inspector`
+
+Launch a real-time TUI dashboard to monitor your application.
+
+```bash
+swiftjs inspector [options]
+```
+
+**Options:**
+
+- `-p, --port <number>`: Target application port (default: 3000)
+- `-H, --host <host>`: Target application host (default: localhost)
+- `-i, --interval <ms>`: Refresh interval (default: 2000)
 
 ### `routes`
 
-List all registered routes in your application. useful for debugging routing issues.
+List all registered routes in your application.
 
 ```bash
 swiftjs routes
 ```
 
-### `info`
+### `test`
 
-Display information about the current project environment.
+Run tests using the built-in test runner (Vitest).
 
 ```bash
-swiftjs info
+swiftjs test [options]
 ```
+
+**Options:**
+
+- `-w, --watch`: Run in watch mode.
+- `-c, --coverage`: Generate coverage report.
+- `--ui`: Open the test runner UI.
 
 ### `clean`
 
-Clean build artifacts (`dist`, `node_modules/.cache`, etc.).
+Clean build artifacts (`dist`, `.cache`, etc.).
 
 ```bash
-swiftjs clean
+swiftjs clean [--all]
 ```
 
 ## Automation
@@ -114,7 +154,8 @@ You can use the CLI in your `package.json` scripts:
     "dev": "swiftjs dev",
     "build": "swiftjs build",
     "start": "swiftjs start",
-    "routes": "swiftjs routes"
+    "routes": "swiftjs routes",
+    "test": "swiftjs test"
   }
 }
 ```

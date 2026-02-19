@@ -1,0 +1,106 @@
+# Real-time Communication
+
+SwiftJS provides native support for real-time, two-way communication via WebSockets and one-way streaming via Server-Sent Events (SSE).
+
+## WebSockets
+
+WebSockets allow for full-duplex, persistent connections between the client and server.
+
+### Defining a WebSocket Route
+
+Use the `app.ws()` method to register a WebSocket handler.
+
+```typescript
+import { createApp } from 'swiftjs-core';
+
+const app = createApp();
+
+app.ws('/chat/:room', {
+  onOpen: (ctx) => {
+    ctx.logger.info(`Client connected to room: ${ctx.params.room}`);
+    ctx.client.send('Welcome to the chat!');
+  },
+  onMessage: (ctx, message) => {
+    if (message.type === 'text') {
+      // Broadcast to other clients (manual implementation)
+      console.log(`Received: ${message.data}`);
+      ctx.client.sendJson({ received: message.data });
+    }
+  },
+  onClose: (ctx, code, reason) => {
+    ctx.logger.info('Client disconnected');
+  }
+});
+
+app.listen();
+```
+
+### WebSocket Context (`WebSocketContext`)
+
+The handler receives a context object similar to standard routes:
+
+- `client`: The WebSocket client instance.
+- `req`: The initial upgrade request (Node.js `IncomingMessage`).
+- `params`: Route parameters (e.g., `:room`).
+- `query`: Query string parameters.
+- `logger`: Logger instance.
+
+### Client Methods
+
+- `client.send(data)`: Send raw string or Buffer.
+- `client.sendJson(data)`: Send an object (automatically stringified).
+- `client.close(code, reason)`: Gracefully close the connection.
+- `client.state`: A `Map` to store per-connection state.
+
+## Server-Sent Events (SSE)
+
+SSE is a standard for pushing data from the server to the client over a persistent HTTP connection. It is simpler than WebSockets and ideal for one-way updates (e.g., live feeds, notifications).
+
+### Defining an SSE Route
+
+Use the `app.sse()` method to register an SSE handler.
+
+```typescript
+app.sse('/events', (ctx) => {
+  ctx.logger.info('SSE client connected');
+
+  // Send initial event
+  ctx.client.send({ event: 'connected', data: 'Hello!' });
+
+  // Send periodic updates
+  const interval = setInterval(() => {
+    ctx.client.send({
+      id: Date.now().toString(),
+      event: 'update',
+      data: { time: new Date().toISOString() }
+    });
+  }, 5000);
+
+  // Clean up on disconnect
+  ctx.client.onClose(() => {
+    clearInterval(interval);
+    ctx.logger.info('SSE client disconnected');
+  });
+});
+```
+
+### Client Support
+
+SSE is natively supported by modern browsers via the `EventSource` API:
+
+```javascript
+const eventSource = new EventSource('/events');
+
+eventSource.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Update received:', data);
+};
+
+eventSource.addEventListener('update', (event) => {
+  console.log('Custom update event:', event.data);
+});
+```
+
+## Scaling Real-time Apps
+
+When running multiple instances of your SwiftJS application (e.g., in a cluster or across multiple servers), you'll need a mechanism like **Redis Pub/Sub** to synchronize messages between clients connected to different instances.

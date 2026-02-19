@@ -1,0 +1,112 @@
+# Observability
+
+SwiftJS provides first-class support for observability, including Prometheus metrics, OpenTelemetry tracing, and Kubernetes-compatible health checks.
+
+## Observability Plugin
+
+The easiest way to enable observability is via the `observabilityPlugin`. This plugin combines metrics, tracing, and health check functionality into a single, easy-to-use package.
+
+```typescript
+import { createApp, observabilityPlugin } from 'swiftjs-core';
+
+const app = createApp();
+
+app.register(observabilityPlugin({
+  serviceName: 'my-awesome-api',
+  version: '1.0.0'
+}));
+
+app.listen();
+```
+
+### Configuration Options
+
+| Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `enableMetrics` | `boolean` | `true` | Enable Prometheus metrics collection. |
+| `enableTracing` | `boolean` | `true` | Enable distributed tracing. |
+| `enableHealth` | `boolean` | `true` | Enable health check endpoints. |
+| `metricsPath` | `string` | `'/metrics'` | Path for the Prometheus metrics endpoint. |
+| `healthPath` | `string` | `'/health'` | Base path for health check endpoints. |
+| `serviceName` | `string` | `'swiftjs-app'` | Service name for tracing and metrics. |
+
+## Metrics
+
+SwiftJS uses a built-in metrics registry to collect and export data in Prometheus text format.
+
+### Custom Metrics
+
+You can define and use custom counters, gauges, and histograms.
+
+```typescript
+import { Counter, Gauge, Histogram } from 'swiftjs-core';
+
+const uploadCounter = new Counter({
+  name: 'file_uploads_total',
+  help: 'Total number of file uploads'
+});
+
+const processingGauge = new Gauge({
+  name: 'active_jobs',
+  help: 'Number of currently active jobs'
+});
+
+app.post('/upload', async (ctx) => {
+  uploadCounter.inc();
+  // ...
+});
+```
+
+## Tracing
+
+Distributed tracing is powered by OpenTelemetry. SwiftJS automatically creates spans for incoming requests and nested operations.
+
+### Manual Spans
+
+You can manually start and manage spans for complex operations.
+
+```typescript
+import { startSpan } from 'swiftjs-core';
+
+app.get('/complex-op', async (ctx) => {
+  return await startSpan('my-custom-operation', async (span) => {
+    // Perform operation
+    span.setAttribute('data.id', 123);
+    return { success: true };
+  });
+});
+```
+
+## Health Checks
+
+SwiftJS provides a robust health check system with support for liveness and readiness probes.
+
+### Built-in Endpoints
+
+- `GET /health`: Full health check with component status.
+- `GET /health/live`: Liveness probe (returns 200 as long as the process is running).
+- `GET /health/ready`: Readiness probe (checks if dependencies are ready).
+
+### Registering Custom Checks
+
+```typescript
+import { registerHealthCheck } from 'swiftjs-core';
+
+registerHealthCheck('database', async () => {
+  const isOk = await checkDbConnection();
+  return isOk 
+    ? { status: 'up' } 
+    : { status: 'down', message: 'Database connection failed' };
+});
+```
+
+## Prometheus Integration
+
+To scrape metrics with Prometheus, add the following to your `prometheus.yml`:
+
+```yaml
+scrape_configs:
+  - job_name: 'swiftjs-api'
+    static_configs:
+      - targets: ['localhost:3000']
+```

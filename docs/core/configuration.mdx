@@ -52,17 +52,83 @@ class S3Service {
 }
 ```
 
-## Framework Settings
+## Configuration Reference
 
-The `Swift` constructor accepts a variety of settings to fine-tune the framework's behavior.
+The `createApp()` factory function (and the `Swift` class) accepts a configuration object that implements the `SwiftConfig` interface.
 
-| Key | Description | Default |
-| :--- | :--- | :--- |
-| `port` | Server port | `3000` |
-| `trustProxy` | Trust `X-Forwarded-*` headers | `false` |
-| `logger` | Custom logger instance | `DefaultLogger` |
-| `bodyLimit` | Maximum request body size | `1mb` |
-| `caseSensitive` | Routing case sensitivity | `false` |
+### General Settings
+
+| Key | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `port` | `number` | `3000` | Port for the server to listen on. |
+| `host` | `string` | `'0.0.0.0'` | Host address to bind the server to. |
+| `env` | `'development' \| 'production' \| 'test'` | `'development'` | The application environment. |
+| `runtime` | `'auto' \| 'node' \| 'bun'` | `'auto'` | Target runtime. Auto-detects by default. |
+| `routesDir` | `string` | `'./routes'` | Directory for file-based route discovery. |
+| `logLevel` | `'debug' \| 'info' \| 'warn' \| 'error'` | `'info'` | Logging level for the built-in pino logger. |
+| `trustProxy` | `boolean` | `false` | Enable if running behind a reverse proxy (trusts `X-Forwarded-*` headers). |
+| `bodyLimit` | `number` | `1048576` (1MB) | Maximum size of request body in bytes. |
+
+### Cache Options
+
+Configuration for the built-in caching system.
+
+```typescript
+{
+  cache: {
+    driver: 'memory' | 'redis',
+    ttl: number, // Time-to-live in seconds
+    max: number, // Max items for memory cache
+    redis: { url: string } // Redis URL for redis driver
+  }
+}
+```
+
+### CORS Options
+
+Configuration for Cross-Origin Resource Sharing.
+
+```typescript
+{
+  cors: {
+    origin: string | string[] | boolean,
+    methods: string[],
+    allowedHeaders: string[],
+    exposedHeaders: string[],
+    credentials: boolean,
+    maxAge: number
+  }
+}
+```
+
+### Rate Limiting
+
+Global rate limiting configuration.
+
+```typescript
+{
+  rateLimit: {
+    max: number, // Max requests
+    window: number // Window in seconds
+  }
+}
+```
+
+### Documentation Settings
+
+Customize the auto-generated OpenAPI/Swagger documentation.
+
+```typescript
+{
+  documentation: {
+    title: string,
+    version: string,
+    description: string,
+    securitySchemes: object,
+    security: array
+  }
+}
+```
 
 ## Secrets Management
 

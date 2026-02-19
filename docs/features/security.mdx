@@ -1,0 +1,110 @@
+# Security
+
+SwiftJS is built with security as a priority, providing multiple layers of protection against common web vulnerabilities.
+
+## Security Plugin
+
+The `securityPlugin` is a one-stop-shop for managing multiple security features, including CSRF protection, SQL injection detection, and input sanitization.
+
+```typescript
+import { createApp, securityPlugin } from 'swiftjs-core';
+
+const app = createApp();
+
+app.register(securityPlugin({
+  csrf: true,
+  sqlSafe: true,
+  sanitize: { escapeHtml: true }
+}));
+
+app.listen();
+```
+
+### Configuration Options
+
+| Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `csrf` | `boolean \| CSRFOptions` | `false` | Enable/configure CSRF protection. |
+| `sqlSafe` | `boolean \| SqlOptions` | `true` | Enable/configure SQL injection detection. |
+| `sanitize` | `boolean \| SanitizeOptions` | `false` | Enable/configure automatic request body sanitization. |
+
+## CSRF Protection
+
+Cross-Site Request Forgery (CSRF) protection works by requiring a secret token in all state-changing requests (POST, PUT, DELETE, etc.).
+
+### Enabling CSRF
+
+When enabled via the plugin or middleware, SwiftJS will:
+1. Generate a secret token and store it in an `httpOnly` cookie.
+2. Provide a `GET /csrf-token` endpoint (if using the plugin).
+3. Verify that the `x-csrf-token` header matches the cookie token on every request.
+
+```typescript
+// Client-side example
+const { token } = await fetch('/csrf-token').then(r => r.json());
+
+await fetch('/api/data', {
+  method: 'POST',
+  headers: {
+    'x-csrf-token': token
+  }
+});
+```
+
+## SQL Injection Detection
+
+SwiftJS includes a dedicated middleware that scans incoming request bodies, query strings, and parameters for common SQL injection patterns.
+
+### How it works
+
+The `sqlSafeMiddleware` uses regular expressions to detect patterns like `UNION SELECT`, `OR 1=1`, and comment markers `--`. By default, it blocks any request where a pattern is detected with a `400 Bad Request`.
+
+```typescript
+import { sqlSafeMiddleware } from 'swiftjs-core';
+
+// Manual registration with options
+app.use(sqlSafeMiddleware({
+  blockOnDetection: true,
+  checkBody: true,
+  checkQuery: true
+}));
+```
+
+## Input Sanitization
+
+Sanitization helps prevent Cross-Site Scripting (XSS) by cleaning or escaping potentially dangerous characters in user input.
+
+### Automatic Sanitization
+
+When enabled, SwiftJS will automatically sanitize `ctx.body` before your handlers are called.
+
+```typescript
+app.register(securityPlugin({
+  sanitize: {
+    escapeHtml: true, // Converts < to &lt;
+    stripHtml: false, // Set to true to remove HTML tags entirely
+    maxStringLength: 1000 // Truncate long strings
+  }
+}));
+
+app.post('/profile', (ctx) => {
+  // ctx.body.bio is already escaped
+  console.log(ctx.body.bio); // "Hello &lt;script&gt..."
+});
+```
+
+## Security Headers
+
+Use the `securityHeadersMiddleware` to set recommended HTTP headers (CSP, HSTS, etc.).
+
+```typescript
+import { securityHeadersMiddleware, strictSecurityHeaders } from 'swiftjs-core';
+
+app.use(securityHeadersMiddleware(strictSecurityHeaders));
+```
+
+This sets:
+- `Content-Security-Policy`: Restricts where resources can be loaded from.
+- `Strict-Transport-Security`: Enforces HTTPS.
+- `X-Content-Type-Options`: Prevents MIME type sniffing.
+- `X-Frame-Options`: Prevents clickjacking.

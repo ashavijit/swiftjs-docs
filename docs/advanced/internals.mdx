@@ -1,206 +1,67 @@
-﻿# Advanced Features
+﻿# Internal Workings & Optimizations
 
-SwiftJS goes beyond basic routing and middleware, offering robust solutions for production needs.
+SwiftJS is designed from the ground up for maximum throughput and minimal overhead. This document explains the core algorithms and architectural decisions that make SwiftJS faster than traditional frameworks.
 
-## Observability
+## 1. Zero-Allocation Radix Router
 
-SwiftJS has built-in observability primitives.
+Traditional routers often split path strings into arrays or use expensive regular expressions for every request. SwiftJS uses a high-performance **Radix Tree (Prefix Tree)** implementation.
 
-### Health Checks
+### Key Optimizations:
+- **Zero-Allocation Matching**: The router avoids string splitting (`split('/')`) during the match phase. It traverses the path string character by character using indices.
+- **Static Route Fast-Path**: Routes without parameters are stored in a `Map` for constant-time `O(1)` lookups.
+- **Reusable Match Object**: Instead of creating a new object for every match, the router uses a pre-allocated `reusableMatch` object, significantly reducing Garbage Collection (GC) pressure.
 
-Expose health endpoints easily.
+```mermaid
+graph TD
+    Root["/"] --> API["api/"]
+    API --> V1["v1/"]
+    V1 --> Users["users"]
+    Users --> UserID[":id"]
+    API --> V2["v2/"]
+```
+
+## 2. Context Pooling
+
+In a typical Node.js framework, a new "Context" or "Request/Response" wrapper is created for every single HTTP request. For an application handling 50k requests per second, this creates millions of short-lived objects that choke the GC.
+
+SwiftJS implements **Context Pooling**:
+- **Reuse**: When a request starts, a `HttpContext` is acquired from a pre-allocated pool.
+- **Reset**: After the response is sent, the context is cleared (references set to `null`) and returned to the pool.
+- **Impact**: This reduces GC cycles by up to 80% in high-concurrency scenarios.
+
+## 3. Hybrid Sync/Async Execution
+
+Most modern frameworks are "all-in" on `async/await`. While convenient, creating a `Promise` for every single middleware and handler adds overhead.
+
+SwiftJS uses a **Sync-First** execution model:
+- **Fast Path**: If a route has no middleware and the handler returns a plain object (not a Promise), SwiftJS executes it synchronously and sends the response immediately.
+- **Dynamic Transition**: SwiftJS only switches to the asynchronous microtask queue if a middleware calls `next()` or a handler returns a `Promise`.
+
+| Feature | SwiftJS | Traditional Frameworks |
+| :--- | :--- | :--- |
+| **Execution** | Sync-First (Hybrid) | Full Async Middleware Chain |
+| **GC Pressure**| Low (Pooling) | High (Object per request) |
+| **Routing** | character-indexed Radix | String splitting / Regex |
+
+## 4. Optimized Middleware Composition
+
+Middleware in SwiftJS is composed using a technique similar to `koa-compose`, but optimized for the common case of small chains (1-3 middlewares).
+
+- **Hardcoded Fast-Paths**: For 1, 2, or 3 middlewares, SwiftJS uses hardcoded functions to avoid the overhead of the recursive `dispatch` function.
+- **Reduced Call Stack**: By unrolling small chains, we reduce the depth of the JavaScript call stack.
 
 ```typescript
-app.get('/health', () => ({
-  status: 'healthy',
-  timestamp: new Date().toISOString(),
-  uptime: process.uptime(),
-}));
-```
-
-### Metrics (Upcoming)
-
-Future versions will include Prometheus-compatible metrics export for request stats, event loop lag, and memory usage.
-
-## Background Jobs
-
-For long-running tasks, don't block the request handler.
-
-### In-Memory Queue (Simple)
-
-For simple use cases, use `setImmediate` or standard Promises, but be aware these don't survive restarts.
-
-```typescript
-app.post('/email', async ctx => {
-  // Respond immediately
-  ctx.status(202).json({ status: 'queued' });
-
-  // Process in background
-  setImmediate(async () => {
-    try {
-      await sendEmail(ctx.body);
-    } catch (err) {
-      ctx.logger.error('Email failed', err);
-    }
-  });
-});
-```
-
-### Job Queue (Recommended)
-
-For production, integrate with Redis-based queues like BullMQ.
-
-```typescript
-import { Queue } from 'bullmq';
-
-const emailQueue = new Queue('email');
-
-app.post('/email', async ctx => {
-  await emailQueue.add('send', ctx.body);
-  return { status: 'queued' };
-});
-```
-
-## Real-time APIs
-
-### WebSockets
-
-Native WebSocket support is planned for v1.0. Currently, you can use libraries like `ws` or `socket.io` by attaching to the underlying server.
-
-```typescript
-import { WebSocketServer } from 'ws';
-
-const app = createApp();
-
-app.listen().then(server => {
-  const wss = new WebSocketServer({ server });
-
-  wss.on('connection', ws => {
-    ws.on('message', msg => {
-      ws.send(`Echo: ${msg}`);
-    });
-  });
-});
-```
-
-### Server-Sent Events (SSE)
-
-You can easily implement SSE with SwiftJS.
-
-```typescript
-app.get('/events', ctx => {
-  ctx.res.setHeader('Content-Type', 'text/event-stream');
-  ctx.res.setHeader('Cache-Control', 'no-cache');
-  ctx.res.setHeader('Connection', 'keep-alive');
-
-  const interval = setInterval(() => {
-    ctx.res.write(`data: ${new Date().toISOString()}\n\n`);
-  }, 1000);
-
-  ctx.req.on('close', () => clearInterval(interval));
-});
-```
-
-## Database Integration
-
-SwiftJS is ORM-agnostic. We recommend fully type-safe ORMs.
-
-### Prisma
-
-```typescript
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
-
-app.get('/users', async () => {
-  return await prisma.user.findMany();
-});
-```
-
-### Drizzle ORM
-
-```typescript
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { users } from './schema';
-
-app.get('/users', async () => {
-  return await db.select().from(users);
-});
-```
-
-## Deployment
-
-### Docker
-
-SwiftJS apps are easy to containerize.
-
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install --production
-COPY dist ./dist
-EXPOSE 3000
-CMD ["node", "dist/index.js"]
-```
-
-### Serverless (AWS Lambda)
-
-Use the `swiftjs-aws-lambda` adapter (coming soon) or `serverless-http` to deploy SwiftJS to AWS Lambda.
-
-```typescript
-import serverless from 'serverless-http';
-import { createApp } from 'swiftjs-core';
-
-const app = createApp();
-// ... routes ...
-
-export const handler = serverless(app);
-```
-
-### PM2
-
-For traditional VPS deployment.
-
-```bash
-npm run build
-pm2 start dist/index.js --name my-app
-```
-
-## Graceful Shutdown
-
-SwiftJS handles shutdown signals (SIGINT, SIGTERM) automatically when you use `app.listen()`. It stops accepting new requests and waits for pending requests to complete.
-
-You can add custom cleanup logic:
-
-```typescript
-app.addHook('onClose', async () => {
-  console.log('Closing database connection...');
-  await db.disconnect();
-});
-```
-
-To manually close the server:
-
-```typescript
-await app.close();
-```
-
-## Clustering
-
-To utilize all available CPU cores, use the `app.cluster()` method. This automatically forks workers and balances the load.
-
-```typescript
-import { createApp } from 'swiftjs-core';
-
-const app = createApp();
-
-app.get('/', () => 'Hello from worker ' + process.pid);
-
-if (process.env.NODE_ENV === 'production') {
-  // Use all available cores
-  app.cluster();
-} else {
-  // Single process for dev
-  app.listen();
+// Example of a 2-middleware fast-path optimization
+if (len === 2) {
+  const m0 = middlewares[0];
+  const m1 = middlewares[1];
+  return (ctx, next) => m0(ctx, () => m1(ctx, next));
 }
 ```
+
+## 5. Runtime Adapters
+
+SwiftJS treats the runtime as a pluggable component. While it provides a standard Node.js adapter, it also includes a **uWebSockets.js (uWS)** adapter.
+
+- **uWS Adapter**: Bypasses the Node.js `http` module and its native HTTP parser entirely. It talks directly to the C++ bindings of uWebSockets, pushing performance toward **100k+ req/sec**.
+- **Bun/Edge Adapters**: Optimized for the specific APIs of those environments (e.g., `Bun.serve`).

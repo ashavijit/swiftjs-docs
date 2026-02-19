@@ -9,31 +9,33 @@ SwiftJS is a TypeScript-first web framework designed for building fast, scalable
 
 ## Key Features
 
-- **Ultra High Performance** - 53k+ req/sec (Node.js), matching Hono and Fastify
-- **Hybrid Sync/Async Router** - Zero-allocation hot paths for synchronous routes
-- **Multi-Runtime Support** - Run on Node.js or Bun with automatic detection
-- **TypeScript-First** - Full type safety with excellent IDE support
-- **File-Based Routing** - Next.js-style automatic route discovery
-- **Schema Validation** - FastAPI-style request validation using Zod
-- **Plugin System** - Fastify-style extensible plugin architecture
-- **Auto API Documentation** - Swagger UI, ReDoc, and Scalar support
-- **Built-in Observability** - Prometheus metrics, OpenTelemetry tracing, health checks
-- **Session Management** - Cookie-based sessions with multiple storage backends
-- **File Uploads** - Multipart form handling with validation
-- **WebSocket & SSE** - Real-time communication support
-- **Dependency Injection** - Built-in service container
-- **Caching** - Memory and Redis cache adapters
+- **Ultra High Performance** - 53k+ req/sec (Node.js), matching Hono and Fastify.
+- **Hybrid Sync/Async Router** - Zero-allocation hot paths for synchronous routes.
+- **Multi-Runtime Support** - Run on Node.js, Bun, or Edge (Lambda, Cloudflare) with automatic detection.
+- **TypeScript-First** - Full type safety with excellent IDE support and Zod integration.
+- **File-Based Routing** - Next.js-style automatic route discovery with dynamic parameters.
+- **Schema Validation** - Powerful request validation for body, query, and params using Zod.
+- **Plugin System** - Extensible architecture with lifecycle hooks (onStart, onRequest, etc.).
+- **Auto API Documentation** - Built-in support for Swagger UI, ReDoc, Scalar, and Stoplight.
+- **Observability** - Native Prometheus metrics, OpenTelemetry tracing, and health checks.
+- **Security** - CSRF protection, security headers, request signing, and SQL injection detection.
+- **Jobs & Scheduling** - Built-in task scheduler for Cron, interval, and delayed jobs.
+- **Real-time** - Seamless WebSocket and Server-Sent Events (SSE) support.
+- **Database Integration** - First-class support for Prisma, Drizzle, and a built-in MemoryDB.
 
 ## Quick Links
 
-- [Getting Started](/docs/guide/introduction) - Install and create your first app
+- [Getting Started](/docs/guide/getting-started) - Install and create your first app
 - [Routing](/docs/core/routing) - File-based and programmatic routing
+- [Configuration](/docs/core/configuration) - Full configuration reference
 - [Validation](/docs/core/validation) - Request validation with Zod
 - [Middleware](/docs/core/middleware) - Creating and using middleware
-- [Plugins](/docs/core/plugins) - Extending functionality with plugins
-- [API Reference](/docs/api) - Complete API documentation
-- [CLI Reference](/docs/cli) - Command line tools
-- [Examples](/docs/guide/examples) - Real-world examples
+- [Observability](/docs/core/observability) - Metrics, tracing, and health checks
+- [Jobs & Scheduling](/docs/features/jobs) - Background tasks and cron jobs
+- [Security](/docs/features/security) - Hardening your SwiftJS application
+- [Real-time](/docs/features/realtime) - WebSockets and SSE
+- [Internal Workings](/docs/advanced/internals) - Performance optimizations and algorithms
+- [CLI Reference](/docs/cli/usage) - Command line tools
 
 ## Installation
 

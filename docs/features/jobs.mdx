@@ -1,0 +1,107 @@
+# Jobs & Scheduling
+
+SwiftJS includes a built-in background job system that allows you to schedule tasks using cron syntax, time intervals, or specific dates.
+
+## Jobs Plugin
+
+To use the scheduling system, you must first register the `jobsPlugin`.
+
+```typescript
+import { createApp, jobsPlugin } from 'swiftjs-core';
+
+const app = createApp();
+
+app.register(jobsPlugin({
+  // Optional: Global job error handler
+  onJobError: (job, err) => {
+    console.error(`Job ${job.name} failed:`, err);
+  },
+  // Default is memory, but you can use 'redis' for persistence
+  store: 'memory' 
+}));
+
+app.listen();
+```
+
+### Configuration Options
+
+| Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `autoStart` | `boolean` | `true` | Start the scheduler automatically on app start. |
+| `store` | `'memory' \| 'redis'` | `'memory'` | Storage backend for jobs. |
+| `onJobStart` | `function` | - | Hook called when a job starts. |
+| `onJobComplete`| `function` | - | Hook called when a job completes successfully. |
+| `onJobError` | `function` | - | Hook called when a job fails. |
+
+## Adding Jobs
+
+You can add jobs to the scheduler using the `app.scheduler` instance.
+
+### Cron Jobs
+
+Schedule a job to run at specific times using standard cron syntax.
+
+```typescript
+app.scheduler.addJob({
+  name: 'midnight-cleanup',
+  schedule: { cron: '0 0 * * *' }, // Runs every day at midnight
+  handler: async (ctx) => {
+    await db.users.deleteMany({ deletedAt: { not: null } });
+  }
+});
+```
+
+### Interval Jobs
+
+Schedule a job to run repeatedly at a fixed interval.
+
+```typescript
+app.scheduler.addJob({
+  name: 'sync-external-api',
+  schedule: { interval: '5m' }, // Runs every 5 minutes
+  handler: async () => {
+    await syncData();
+  }
+});
+```
+
+The interval string supports human-readable formats: `s` (seconds), `m` (minutes), `h` (hours), `d` (days).
+
+### One-time Delayed Jobs
+
+Schedule a job to run once at a specific date or after a delay.
+
+```typescript
+app.scheduler.addJob({
+  name: 'welcome-email',
+  schedule: { delay: '1h' }, // Runs once in 1 hour
+  handler: async (ctx) => {
+    await sendEmail(ctx.data.userId);
+  },
+  data: { userId: '123' }
+});
+```
+
+## Job Persistence (Redis)
+
+For production applications where you need jobs to persist across restarts or shared across multiple instances, use the `RedisJobStore`.
+
+```typescript
+import { jobsPlugin, RedisJobStore } from 'swiftjs-core';
+
+app.register(jobsPlugin({
+  store: new RedisJobStore({
+    url: 'redis://localhost:6379',
+    prefix: 'swiftjs-jobs:'
+  })
+}));
+```
+
+## Manual Control
+
+The scheduler can be manually started and stopped if needed.
+
+```typescript
+await app.scheduler.start();
+await app.scheduler.stop();
+```
