@@ -13,92 +13,73 @@ DATABASE_URL=...
 JWT_SECRET=...
 ```
 
-## Docker Deployment (Recommended)
+## Deployment Options
 
-Docker is the preferred way to deploy SwiftJS apps, ensuring consistency across development and production.
+Select your target environment to see specific instructions and configurations.
 
-### Dockerfile
-```dockerfile
-# Build stage
-FROM oven/bun:latest as builder
-WORKDIR /app
-COPY package.json bun.lockb ./
-RUN bun install --frozen-lockfile
-COPY . .
-RUN bun run build
+<Tabs items={["Docker", "PM2 / VPS", "Edge Runtimes"]}>
+    <Tab>
+      ### Docker (Recommended)
+      Docker ensures consistency across development and production.
+      
+      ```dockerfile
+      FROM oven/bun:latest as builder
+      WORKDIR /app
+      COPY package.json bun.lockb ./
+      RUN bun install --frozen-lockfile
+      COPY . .
+      RUN bun run build
+      
+      FROM oven/bun:slim
+      WORKDIR /app
+      COPY --from=builder /app/dist ./dist
+      COPY --from=builder /app/package.json ./package.json
+      
+      CMD ["bun", "dist/app.js"]
+      ```
+    </Tab>
+    <Tab>
+      ### PM2 (VPS)
+      For traditional VPS deployments without Docker, use PM2 for process management.
+      
+      ```bash
+      pm2 start dist/app.js --name "swift-api" -i max
+      ```
+    </Tab>
+    <Tab>
+      ### Edge / Serverless
+      SwiftJS provides native adapters for Edge runtimes.
+      
+      ```typescript
+      // Cloudflare Workers
+      import { Swift } from 'swiftjs-core';
+      import { CloudflareAdapter } from '@swiftjs/adapter-cloudflare';
+      
+      export default new Swift({ 
+        adapter: new CloudflareAdapter() 
+      });
+      ```
+    </Tab>
+</Tabs>
 
-# Production stage
-FROM oven/bun:slim
-WORKDIR /app
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./package.json
+## Production Hardening
 
-ENV NODE_ENV=production
-EXPOSE 3000
+Follow these steps before going live to ensure your SwiftJS application is secure and performant.
 
-CMD ["bun", "dist/app.js"]
-```
+<Steps>
+  <Step number="1" title="Environment Configuration">
+    Set `NODE_ENV=production` and ensure all secrets are loaded from a secure environment variable provider.
+  </Step>
+  <Step number="2" title="Enable Optimizations">
+    Use the `compression()` and `rateLimit()` middlewares. Ensure **Context Pooling** is enabled (default) for high-load handling.
+  </Step>
+  <Step number="3" title="Health & Monitoring">
+    Expose a `/health` endpoint and integrate with Prometheus or OpenTelemetry for real-time observability.
+  </Step>
+  <Step number="4" title="Security Audit">
+    Check for SQL injection vulnerabilities (if using raw queries) and ensure all inputs are validated via **Zod schemas**.
+  </Step>
+</Steps>
 
-## Process Management (PM2)
-
-If deploying to a VPS (Ubuntu/Debian) without Docker, use PM2 to manage your processes.
-
-```bash
-npm install -g pm2
-pm2 start dist/app.js --name "swift-api" -i max
-```
-
-### PM2 Ecosystem File
-```javascript
-module.exports = {
-  apps: [{
-    name: "swift-api",
-    script: "./dist/app.js",
-    instances: "max",
-    exec_mode: "cluster",
-    wait_ready: true, // SwiftJS supports PM2 wait-ready signal
-    env_production: {
-      NODE_ENV: "production"
-    }
-  }]
-}
-```
-
-## CI/CD Pipeline (GitHub Actions)
-
-Example workflow to test and build your SwiftJS application on every push.
-
-```yaml
-name: CI
-on: [push]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v1
-      - run: bun install
-      - run: bun test
-      - run: bun run build
-```
-
-## Edge Deployment
-
-### Cloudflare Workers
-SwiftJS provides a native adapter for Cloudflare Workers. Note that some features (like disk-based file uploads) are unavailable in the Edge runtime.
-
-```typescript
-import { Swift } from 'swiftjs-core';
-import { CloudflareAdapter } from '@swiftjs/adapter-cloudflare';
-
-const app = new Swift({ adapter: new CloudflareAdapter() });
-export default app;
-```
-
-## Deployment Checklist
-
-1. **Disable Development Logs**: Ensure logging level is set to `info` or `warn`.
-2. **Enable Compression**: Use the `compression()` middleware to save bandwidth.
-3. **Health Checks**: Implement a `GET /health` endpoint for load balancer monitoring.
-4. **SSL/TLS**: Never serve raw HTTP. Use a reverse proxy (Nginx/Traefik) or a CDN (Cloudflare) for SSL.
+[!IMPORTANT]
+Always deploy behind a reverse proxy (like Nginx, Traefik, or Cloudflare) to handle SSL/TLS termination and provide an additional layer of security.

@@ -16,10 +16,15 @@ export type Doc = {
 
 export async function getDocBySlug(slug: string[]): Promise<Doc | null> {
   const realSlug = slug.join("/");
-  const fullPath = path.join(contentDirectory, `${realSlug}.mdx`);
+  let fullPath = path.join(contentDirectory, `${realSlug}.mdx`);
   
   if (!fs.existsSync(fullPath)) {
-    return null;
+    const indexPath = path.join(contentDirectory, realSlug, 'index.mdx');
+    if (fs.existsSync(indexPath)) {
+       fullPath = indexPath;
+    } else {
+       return null;
+    }
   }
 
   const fileContents = fs.readFileSync(fullPath, "utf8");
@@ -60,8 +65,19 @@ function getAllMdxFiles(dir: string, basePath: string = ""): string[][] {
     if (entry.isDirectory()) {
       slugs.push(...getAllMdxFiles(fullPath, relativePath));
     } else if (entry.name.endsWith(".mdx")) {
-      const slug = relativePath.replace(/\.mdx$/, "").split("/");
-      slugs.push(slug);
+      let slug = relativePath.replace(/\.mdx$/, "").split("/");
+      // If the file is index.mdx, the slug should be the directory path
+      if (slug[slug.length - 1] === "index") {
+        slug.pop();
+      }
+      // Only push if slug is not empty (for root index.mdx, it becomes an empty array)
+      if (slug.length > 0) {
+        slugs.push(slug);
+      } else {
+        // Special case for root index.mdx? 
+        // If we want /docs to work, we might need an empty slug or "index"
+        // Let's keep it as is for now if root works.
+      }
     }
   }
 

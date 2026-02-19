@@ -5,10 +5,11 @@ import { cn } from "@/lib/utils";
 import { Plus, Info, Lightbulb, AlertCircle, AlertTriangle, ShieldAlert } from "lucide-react";
 import { CopyButton } from "./copy-button";
 import { Mermaid } from "./mermaid";
+import { Tabs, Tab, Steps, Step } from "./mdx-client";
 
 async function CodeBlock({ code, lang }: { code: string; lang: string }) {
     const normalizedLang = lang.toLowerCase();
-    const useLang = SUPPORTED_LANGS.has(normalizedLang) ? lang : "text";
+    const useLang = SUPPORTED_LANGS.has(normalizedLang) ? normalizedLang : "text";
 
     const lightHtml = await codeToHtml(code.trim(), {
         lang: useLang,
@@ -71,9 +72,9 @@ export const Callout = ({ type = "info", title, children }: any) => {
             title: "text-emerald-800 dark:text-emerald-200"
         },
         important: {
-            container: "bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-200/50 dark:border-indigo-800/50 text-indigo-900 dark:text-indigo-100",
-            icon: <AlertCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />,
-            title: "text-indigo-800 dark:text-indigo-200"
+            container: "bg-purple-50/30 dark:bg-purple-900/10 border-purple-100 dark:border-purple-800/30 text-purple-900 dark:text-purple-100",
+            icon: null, 
+            title: "text-purple-800 dark:text-purple-200"
         },
         warning: {
             container: "bg-amber-50/50 dark:bg-amber-900/10 border-amber-200/50 dark:border-amber-800/50 text-amber-900 dark:text-amber-100",
@@ -98,9 +99,11 @@ export const Callout = ({ type = "info", title, children }: any) => {
             <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none bg-gradient-to-br from-current to-transparent" />
             
             <div className="flex items-start gap-4">
-                <div className="mt-0.5 shrink-0">
-                    {variant.icon}
-                </div>
+                {variant.icon && (
+                    <div className="mt-0.5 shrink-0">
+                        {variant.icon}
+                    </div>
+                )}
                 <div className="space-y-1.5 flex-1">
                     {title && (
                         <p className={cn(
@@ -158,26 +161,30 @@ export const CustomComponents: any = {
     ),
     blockquote: (props: any) => {
         const children = props.children;
-        const text = typeof children === 'string' ? children : 
-                     (Array.isArray(children) && typeof children[0] === 'string') ? children[0] : 
-                     (children?.props?.children && typeof children.props.children === 'string') ? children.props.children : "";
+        
+        // Robust regex for alert detection (handles whitespace and case)
+        const ALERT_REGEX = /^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i;
 
-        const alertMatch = text.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
+        // Find the first non-empty text string in the children tree
+        const findFirstText = (node: any): string => {
+            if (typeof node === 'string') {
+                return node.trim() ? node : "";
+            }
+            if (Array.isArray(node)) {
+                for (const child of node) {
+                    const text = findFirstText(child);
+                    if (text) return text;
+                }
+            }
+            if (node?.props?.children) return findFirstText(node.props.children);
+            return "";
+        };
+
+        const firstText = findFirstText(children);
+        const alertMatch = firstText.match(ALERT_REGEX);
         
         if (alertMatch) {
-            const type = alertMatch[1].toLowerCase();
-            const cleanChildren = React.Children.map(children, (child: any) => {
-                if (typeof child === 'string') {
-                    return child.replace(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i, "");
-                }
-                if (child?.props?.children && typeof child.props.children === 'string') {
-                    return React.cloneElement(child, {
-                        children: child.props.children.replace(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i, "")
-                    });
-                }
-                return child;
-            });
-
+            const markerType = alertMatch[1].toLowerCase();
             const typeMap: Record<string, string> = {
                 note: "info",
                 tip: "success",
@@ -186,8 +193,40 @@ export const CustomComponents: any = {
                 caution: "error"
             };
 
+            // Recursively clean the alert tag from the children tree
+            const cleanAlertTag = (node: any): any => {
+                if (typeof node === 'string') {
+                    const cleaned = node.replace(ALERT_REGEX, "").trimStart();
+                    return cleaned;
+                }
+                if (Array.isArray(node)) {
+                    let cleaned = false;
+                    return React.Children.map(node, child => {
+                        if (!cleaned) {
+                            const newChild = cleanAlertTag(child);
+                            if (newChild !== child) {
+                                cleaned = true;
+                                return newChild;
+                            }
+                        }
+                        return child;
+                    });
+                }
+                if (node?.props?.children) {
+                    const newChildren = cleanAlertTag(node.props.children);
+                    // If after cleaning the paragraph is empty, we might want to skip it, 
+                    // but for safety we just clone with new children.
+                    return React.cloneElement(node, {
+                        children: newChildren
+                    });
+                }
+                return node;
+            };
+
+            const cleanChildren = cleanAlertTag(children);
+
             return (
-                <Callout type={typeMap[type] || "info"} title={type.toUpperCase()}>
+                <Callout type={typeMap[markerType] || "info"} title={markerType.toUpperCase()}>
                     {cleanChildren}
                 </Callout>
             );
@@ -265,4 +304,38 @@ export const CustomComponents: any = {
         </div>
     ),
     Callout: (props: any) => <Callout {...props} />,
+    // Tabs component
+    Tabs,
+    // Tab item (wrapper)
+    Tab,
+    // Steps component
+    Steps,
+    // Individual step
+    Step,
+    // Comparison card
+    Comparison: ({ children }: any) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-8 text-left">
+            {children}
+        </div>
+    ),
+    ComparisonLeft: ({ title = "Express", children }: any) => (
+        <div className="border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden flex flex-col">
+            <div className="bg-neutral-100 dark:bg-neutral-800/50 px-4 py-2 text-xs font-bold uppercase tracking-wider text-neutral-500 border-b border-neutral-200 dark:border-neutral-800">
+                {title}
+            </div>
+            <div className="p-0 prose-pre:my-0 prose-pre:rounded-none flex-1">
+                {children}
+            </div>
+        </div>
+    ),
+    ComparisonRight: ({ title = "SwiftJS", children }: any) => (
+        <div className="border border-blue-200 dark:border-blue-900/50 rounded-xl overflow-hidden ring-2 ring-blue-500/20 flex flex-col">
+            <div className="bg-blue-50 dark:bg-blue-900/30 px-4 py-2 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 border-b border-blue-200 dark:border-blue-900/50">
+                {title}
+            </div>
+            <div className="p-0 prose-pre:my-0 prose-pre:rounded-none text-blue-950 dark:text-blue-50 flex-1">
+                {children}
+            </div>
+        </div>
+    ),
 };
